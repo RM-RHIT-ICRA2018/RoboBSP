@@ -62,21 +62,3 @@ print(info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
 client.loop_start()
-
-
-
-
-
-
-
-
-
-#    sock.send(can_pkt)
-
-
-
-
-  
-
-   can_id = 0x200
-   can_pkt = struct.pack(fmt, 0x200,8,bytes([0x0F,0xA0,0x00,0xA0,0x00,0xA0,0x00,0xA0]))
