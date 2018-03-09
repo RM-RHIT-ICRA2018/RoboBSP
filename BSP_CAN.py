@@ -1,9 +1,18 @@
 import socket, struct, sys, json, time, os.path, threading
 import paho.mqtt.client as mqtt
-import BSP_ERROR
+import BSP_ERROR, BSP_PID as PID
 
 version = "00A01B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
+CHASSIS_SPEED_SETTINS = {"P":0.1, "I":0.0, "D":0.0}
+Chassis_1_Speed = PID.PID(CHASSIS_SPEED_SETTINS["P"], CHASSIS_SPEED_SETTINS["I"], CHASSIS_SPEED_SETTINS["D"])
+Chassis_1_Speed.SetPoint=0.0
+Chassis_1_Speed.setSampleTime(0.001)
+
+CHASSIS_TORQUE_SETTINS = {"P":0.1, "I":0.0, "D":0.0}
+Chassis_1_Torque = PID.PID(CHASSIS_TORQUE_SETTINS["P"], CHASSIS_TORQUE_SETTINS["I"], CHASSIS_TORQUE_SETTINS["D"])
+Chassis_1_Torque.SetPoint=0.0
+Chassis_1_Torque.setSampleTime(0.001)
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -41,17 +50,25 @@ def CAN_RCV_LOOP(args):
         can_id &= socket.CAN_EFF_MASK
         data = data[:length]
 
-        if can_id >= 0x200 and can_id <= 0x208:
+        if can_id == 0x208:
             torque = data[4]*256+data[5]
             if torque >= 2**15:
                 torque = -(2**16-torque)
             speed = data[2]*256+data[3]
             if speed >= 2**15:
                 speed = -(2**16-speed)
-            msg_content = {"Type": "MotorFeedback","Angle" : (360.0)/(8191)*(data[0]*256+data[1]),
-    "Speed" : speed, "Torque" : torque, "ID" : int(can_id)-0x200}
-            print(BSP_ERROR.info(msg_content))
-            mqtt.publish("/MOTOR/", json.dumps(msg_content))
+            
+            Chassis_1_Speed.update(speed)
+            Chassis_1_Torque.SetPoint(Chassis_1_Speed.output)
+
+            Chassis_1_Torque.update(torque)
+            chs1_out = Chassis_1_Torque.output
+            print("Speed: %06d Torque: %06d" % (Chassis_1_Speed.output, Chassis_1_Torque.output))
+            #can_pkt = struct.pack(fmt, 0x208,8,bytes([0,0,0,0,0,0,0,0]))
+            #sock.send(can_pkt)
+            #msg_content = {"Type": "MotorFeedback","Angle" : (360.0)/(8191)*(data[0]*256+data[1]), "Speed" : speed, "Torque" : torque, "ID" : int(can_id)-0x200}
+            #print(BSP_ERROR.info(msg_content))
+            #mqtt.publish("/MOTOR/", json.dumps(msg_content))
             
 
 client = mqtt.Client()
@@ -61,4 +78,4 @@ client.on_message = on_message
 print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
-client.loop_start()
+client.loop_forever()
