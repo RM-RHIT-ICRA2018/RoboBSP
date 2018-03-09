@@ -66,7 +66,7 @@ def CAN_RCV_LOOP():
             chs1_out = Chassis_1_Torque.output
 
             if chs1_out < 0:
-                speed = (-speed)+2**16
+                speed = speed+2**16
 
             print("Speed: %06d Torque: %06d Data: 0x%02x 0x%02x" % (Chassis_1_Speed.output, Chassis_1_Torque.output, int(speed/256),speed-int(speed/256)))
             can_pkt = struct.pack(fmt, 0x208,8,bytes([0,0,0,0,0,0,int(speed/256),speed-int(speed/256)]))
