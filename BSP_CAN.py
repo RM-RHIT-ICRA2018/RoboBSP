@@ -1,4 +1,4 @@
-import socket, struct, sys, json, time, os.path, thread
+import socket, struct, sys, json, time, os.path, threading
 import paho.mqtt.client as mqtt
 import BSP_ERROR
 
@@ -24,7 +24,7 @@ def on_connect(client, userdata, flags, rc):
     print(notice("MQTT Interface Bind Success."))
     client.subscribe("/CANBUS/#")
     print(notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
-    thread.start_new_thread(CAN_RCV_LOOP, (""))
+    threading.Thread(target = CAN_RCV_LOOP)
 
 def on_message(client, userdata, msg):
     print(info("Topic: "+ msg.topic + " Payload: " + msg.payload))
