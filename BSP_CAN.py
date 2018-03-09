@@ -33,7 +33,8 @@ def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
     client.subscribe("/CANBUS/#")
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
-    threading.Thread(target = CAN_RCV_LOOP)
+    t = threading.Thread(target = CAN_RCV_LOOP)
+    t.start()
 
 def on_message(client, userdata, msg):
     print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload))
@@ -43,7 +44,7 @@ def on_message(client, userdata, msg):
         sock.send(can_pkt)
         print(BSP_ERROR.info("SocketCAN Package Send"))
 
-def CAN_RCV_LOOP(args):
+def CAN_RCV_LOOP():
     while 1:
         can_pkt = sock.recv(16)
         can_id, length, data = struct.unpack(fmt, can_pkt)
