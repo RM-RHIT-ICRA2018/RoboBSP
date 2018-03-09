@@ -66,10 +66,10 @@ def CAN_RCV_LOOP():
             chs1_out = Chassis_1_Torque.output
 
             if chs1_out < 0:
-                speed = speed+2**16
+                chs1_out = chs1_out+65536
 
             print("Speed: %06d Torque: %06d Data: 0x%02x 0x%02x" % (Chassis_1_Speed.output, Chassis_1_Torque.output, int(speed/256),speed-int(speed/256)))
-            can_pkt = struct.pack(fmt, 0x208,8,bytes([0,0,0,0,0,0,int(speed/256),speed-int(speed/256)]))
+            can_pkt = struct.pack(fmt, 0x208,8,bytes([0,0,0,0,0,0,int(chs1_out/256),chs1_out-int(chs1_out/256)]))
             #sock.send(can_pkt)
             #msg_content = {"Type": "MotorFeedback","Angle" : (360.0)/(8191)*(data[0]*256+data[1]), "Speed" : speed, "Torque" : torque, "ID" : int(can_id)-0x200}
             #print(BSP_ERROR.info(msg_content))
