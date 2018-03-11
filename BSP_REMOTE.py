@@ -25,6 +25,7 @@ class DataHolder(object):
     gyro = [0.0,0.0,0.0] #[x,y,z]
     acce = [0.0,0.0,0.0] #[x,y,z]
     controlKeys = [0,0,0,0,0,0] #[w,a,s,d,q,e]
+    key_press = 0
 
 
     def __init__(self):
@@ -83,8 +84,23 @@ def control_key_pressed(keyNo):
 #     client.publish("/MOTOR/", json.dumps({"ID": 3, "Speed": 2*a, "Angle": a-a*0.02+a/3, "Torque": a*a-a}))
 #     data.a = data.a+1
     
-    if data.input_enabled:
-        data.controlKeys[keyNo] = (data.controlKeys[keyNo] + 1)%2
+    
+    
+    if data.input_enabled and data.controlKeys[keyNo] == 0:
+        print(str(keyNo)+' Pressed')
+        data.controlKeys[keyNo] = 1
+        sentControlMsg()
+        
+def control_key_released(keyNo):
+#     #receive test
+#     a=data.a 
+#     client.publish("/MOTOR/", json.dumps({"ID": 1, "Speed": a, "Angle": a/(a-0.5), "Torque": a*a}))
+#     client.publish("/MOTOR/", json.dumps({"ID": 3, "Speed": 2*a, "Angle": a-a*0.02+a/3, "Torque": a*a-a}))
+#     data.a = data.a+1
+    
+    if data.input_enabled and data.controlKeys[keyNo] == 1:
+        print(str(keyNo)+' Released')
+        data.controlKeys[keyNo] = 0
         sentControlMsg()
         
 def enable_control():
@@ -232,12 +248,19 @@ def main():
     
     
     
-    root.bind_all('<Key-w>', lambda event: control_key_pressed(0))
-    root.bind_all('<Key-a>', lambda event: control_key_pressed(1))
-    root.bind_all('<Key-s>', lambda event: control_key_pressed(2))
-    root.bind_all('<Key-d>', lambda event: control_key_pressed(3))
-    root.bind_all('<Key-q>', lambda event: control_key_pressed(4))
-    root.bind_all('<Key-e>', lambda event: control_key_pressed(5))
+    root.bind_all('<KeyPress-w>', lambda event: control_key_pressed(0))
+    root.bind_all('<KeyPress-a>', lambda event: control_key_pressed(1))
+    root.bind_all('<KeyPress-s>', lambda event: control_key_pressed(2))
+    root.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
+    root.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
+    root.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
+    
+    root.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
+    root.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
+    root.bind_all('<KeyRelease-s>', lambda event: control_key_released(2))
+    root.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
+    root.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
+    root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
     
     GUI_thread = threading.Thread(target=root.mainloop())
     GUI_thread.start() 
