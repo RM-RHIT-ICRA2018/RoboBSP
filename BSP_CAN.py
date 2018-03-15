@@ -1,5 +1,4 @@
 import socket, struct, sys, json, time, os.path, threading,math
-from bitstring import Bits
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
