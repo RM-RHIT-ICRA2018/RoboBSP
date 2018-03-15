@@ -20,8 +20,8 @@ mono = 6
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
-CHASSIS_SPEED_SETTINS = {"P":18, "I":0.0, "D":0.0}
-CHASSIS_TORQUE_SETTINS = {"P":0.1 ,"I":0.0, "D":0.0}
+CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
+CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 GIMBAL_YAW_SPEED_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
 GIMBAL_YAW_TORQUE_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
@@ -30,46 +30,33 @@ GIMBAL_PITCH_SPEED_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
 GIMBAL_PITCH_TORQUE_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
 
 MOTOR_SPEED_SETTINS = []
+MOTOR_TORQUE_SETTINS = []
+for i in range(4):
+    MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINGS)        
+    MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINGS)
+MOTOR_SPEED_SETTINS.append(GIMBAL_YAW_SPEED_SETTINGS)
+MOTOR_TORQUE_SETTINS.append(GIMBAL_YAW_TORQUE_SETTINGS)
+MOTOR_SPEED_SETTINS.append(GIMBAL_PITCH_SPEED_SETTINGS)
+MOTOR_TORQUE_SETTINS.append(GIMBAL_PITCH_TORQUE_SETTINGS)
+
+
+
 MOTOR_SPEED = []
 MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 0, 0, 0]
-for i in range(4):
-    MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINS)
+for i in range(mono):
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
     MOTOR_SPEED[i].setSampleTime(0.01)
 
-i = 4
-MOTOR_SPEED_SETTINS.append(GIMBAL_YAW_SPEED_SETTINGS)
-MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
-MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
-MOTOR_SPEED[i].setSampleTime(0.01)
 
-i = 5
-MOTOR_SPEED_SETTINS.append(GIMBAL_PITCH_SPEED_SETTINGS)
-MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
-MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
-MOTOR_SPEED[i].setSampleTime(0.01)
 
-MOTOR_TORQUE_SETTINS = []
 MOTOR_TORQUE = []
 MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-for i in range(4):
-    MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINS)
+for i in range(mono):
     MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
     MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
     MOTOR_TORQUE[i].setSampleTime(0.001)
 
-i = 4
-MOTOR_TORQUE_SETTINS.append(GIMBAL_YAW_TORQUE_SETTINGS)
-MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
-MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
-MOTOR_TORQUE[i].setSampleTime(0.001)
-
-i = 5
-MOTOR_TORQUE_SETTINS.append(GIMBAL_PITCH_TORQUE_SETTINGS)
-MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
-MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
-MOTOR_TORQUE[i].setSampleTime(0.001)
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -158,7 +145,7 @@ def CAN_RCV_LOOP():
             if speed >= 2**15:
                 speed = speed-2**16
 
-            for i in range(6):
+            for i in range(mono):
                 if can_id == MOTOR_ID_HEX[i] :
                     if phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
@@ -204,14 +191,14 @@ def CAN_RCV_LOOP():
                     prt_spd_msg = " Published Speed: "
                     prt_trq_msg = " Published Torque: "
                     for i in range(6):
-                        prt_angle = prt_angle + str(i) + get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))
-                        prt_trq_out = prt_trq_out + str(i) + get_sign(MOTOR_TORQUE[i].output) + ("[%06d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))
+                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%06d] " % (abs(MOTOR_TORQUE[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
-                        prt_angle_msg = prt_angle_msg + str(i) + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
-                        prt_spd_msg = prt_spd_msg + str(i) + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
-                        prt_trq_msg = prt_trq_msg + str(i) + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
+                        prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
+                        prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
+                        prt_trq_msg = prt_trq_msg + str(i) + "[" + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
                     printing = "INFO PRINTING >>> "
                     if PRINT_Motor_Angle:
                         printing = printing + prt_angle
@@ -241,7 +228,7 @@ def CAN_RCV_LOOP():
                     CAN_PACK.append(int(int(motor_out[i])/256))
                     CAN_PACK.append(int(int(motor_out[i])%256))
                 can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
-
+                CAN_PACK = []
                 for i in range(3):
                     CAN_PACK.append(int(int(motor_out[i+4])/256))
                     CAN_PACK.append(int(int(motor_out[i+4])%256))
