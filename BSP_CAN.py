@@ -2,12 +2,13 @@ import socket, struct, sys, json, time, os.path, threading,math
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = False
+PRINT_MOTOR_INFO = True
+PRINT_ROLLING = False
 
 PRINT_Motor_Angle = False
-PRINT_Motor_Speed = False
+PRINT_Motor_Speed = True
 PRINT_Speed_Output = False
-PRINT_Torque_Output = False
+PRINT_Torque_Output = True
 PRINT_Control_Signal = False
 PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
@@ -138,8 +139,7 @@ def CAN_RCV_LOOP():
                    
                     MOTOR_TORQUE[i].update(torque)
                     motor_out[i] = MOTOR_TORQUE[i].output
-                    if i==0:
-                        print("\rPhi:%06f Angle:%06f Speed.out:%06f ChsOut:%06f" % (MOTOR_Phi[i], MOTOR_Angle[i], MOTOR_SPEED[i].output, motor_out[i]), end="")
+    
                     if motor_out[i] < 0 and abs(motor_out[i])>2**15:
                         motor_out[i] = -2**15
 
@@ -190,7 +190,10 @@ def CAN_RCV_LOOP():
                         printing = printing + prt_spd_msg
                     if PRINT_Torque_Massage:
                         printing = printing + prt_trq_msg
-                    print(printing)
+                    if PRINT_ROLLING:
+                        print(printing)
+                    else:
+                        print("\r"+ printing, end="")
                 
 
                 CAN_PACK = []
