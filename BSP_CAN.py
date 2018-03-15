@@ -24,10 +24,10 @@ CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
 CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 GIMBAL_YAW_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
-GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
+GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 GIMBAL_PITCH_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
-GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
+GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 FEEDING_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
 FEEDING_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
@@ -47,7 +47,7 @@ MOTOR_TORQUE_SETTINS.append(FEEDING_TORQUE_SETTINGS)
 
 
 MOTOR_SPEED = []
-MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 0, 0, 0]
+MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 174, 174, 0]
 for i in range(mono):
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
@@ -162,7 +162,10 @@ def CAN_RCV_LOOP():
                                 MOTOR_Phi[i] = MOTOR_Phi[i] + 360
                             MOTOR_Angle[i] = MOTOR_Now[i]
 
-                            MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
+                            if i in range(4):
+                                MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
+                            elif i in range(4,6):
+                                MOTOR_SPEED[i].update(MOTOR_Now[i])
                             MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
                             phi_count[i] = 0
                         else:
