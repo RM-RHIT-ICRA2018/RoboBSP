@@ -29,7 +29,7 @@ for i in range(mono):
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
     MOTOR_SPEED[i].setSampleTime(0.001)
-.decode("utf-8")))
+
     payload = json.loads(msg.payload.decode("utf-8"))
     # if payload["Type"] == "MotorTye":
     #     can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
