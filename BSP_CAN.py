@@ -155,7 +155,7 @@ def CAN_RCV_LOOP():
                     break
 
             if False not in MOTOR_Updated:
-                print("\r" + "a", end="")
+                print("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac")
                 if PRINT_MOTOR_INFO:
                     
                     prt_angle = " Angle: "
