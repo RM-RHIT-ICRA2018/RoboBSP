@@ -87,7 +87,7 @@ def CAN_RCV_LOOP():
     MOTOR_Angle = []
     MOTOR_Phi = []
     MOTOR_Now = []
-    motor_out = [0.0, 0.0, 0.0, 0.0]
+    motor_out = []
     MOTOR_Updated = []
     MOTOR_ID_DES = []
     MOTOR_ANGLE_MSG_OUT = []
@@ -97,6 +97,7 @@ def CAN_RCV_LOOP():
         MOTOR_Angle.append(0.0)
         MOTOR_Phi.append(0.0)
         MOTOR_Now.append(0.0)
+        motor_out.append(0.0)
         MOTOR_Updated.append(False)
         MOTOR_ID_DES.append(i)
         MOTOR_ANGLE_MSG_OUT.append(0.0)
