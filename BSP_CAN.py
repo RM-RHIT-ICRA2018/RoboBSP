@@ -164,14 +164,14 @@ def CAN_RCV_LOOP():
                     prt_spd_msg = " Published Speed: "
                     prt_trq_msg = " Published Torque: "
                     for i in range(mono):
-                        prt_angle = prt_angle + str(i) + (get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + (get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + (get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))                        
-                        prt_trq_out = prt_trq_out + str(i) + (get_sign(MOTOR_TORQUE[i].output) + ("[%06d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_angle = prt_angle + str(i) + get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
+                        prt_spd = prt_spd + str(i) + get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))                        
+                        prt_trq_out = prt_trq_out + str(i) + get_sign(MOTOR_TORQUE[i].output) + ("[%06d] " % (abs(MOTOR_TORQUE[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
-                        prt_angle_msg = prt_angle_msg + str(i) + (get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
-                        prt_spd_msg = prt_spd_msg + str(i) + (get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
-                        prt_trq_msg = prt_trq_msg + str(i) + (get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
+                        prt_angle_msg = prt_angle_msg + str(i) + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
+                        prt_spd_msg = prt_spd_msg + str(i) + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
+                        prt_trq_msg = prt_trq_msg + str(i) + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
                     printing = "INFO PRINTING >>> "
                     if PRINT_Motor_Angle:
                         printing = printing + prt_angle
@@ -214,15 +214,3 @@ print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
 client.loop_forever()
-© 2018 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-API
-Training
-Shop
-Blog
-About
