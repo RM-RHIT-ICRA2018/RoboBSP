@@ -252,13 +252,13 @@ def CAN_RCV_LOOP():
                         mqtt_count = mqtt_count + 1
                     for i in range(4):
                         MOTOR_Updated[i] = False
-    except KeyboardInterrupt:
-        print("Ctrl_C Interrupted")
-        can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
-        sock.send(can_pkt)
-        can_pkt = struct.pack(fmt, 0x1FF,8, bytes([0,0,0,0,0,0,0,0]))
-        sock.send(can_pkt)
-        exit()
+        except KeyboardInterrupt:
+            print("Ctrl_C Interrupted")
+            can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
+            sock.send(can_pkt)
+            can_pkt = struct.pack(fmt, 0x1FF,8, bytes([0,0,0,0,0,0,0,0]))
+            sock.send(can_pkt)
+            exit()
 
 
 client = mqtt.Client()
