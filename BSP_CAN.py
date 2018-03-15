@@ -25,10 +25,10 @@ CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
 CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 GIMBAL_YAW_SPEED_SETTINGS = {"P":5.0 ,"I":0.0, "D":0.0}
-GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+GIMBAL_YAW_TORQUE_SETTINGS = {"P":1.5 ,"I":0.0, "D":0.0}
 
 GIMBAL_PITCH_SPEED_SETTINGS = {"P":5.0 ,"I":0.0, "D":0.0}
-GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+GIMBAL_PITCH_TORQUE_SETTINGS = {"P":1.5 ,"I":0.0, "D":0.0}
 
 FEEDING_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
 FEEDING_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
@@ -191,24 +191,24 @@ def CAN_RCV_LOOP():
             if False not in MOTOR_Updated:
                 if PRINT_MOTOR_INFO:
 
-                    prt_angle = " Angle: "
-                    prt_spd = " Motor Speed: "
-                    prt_spd_out = " Speed.output: "
-                    prt_trq_out = " Torque.output: "
-                    prt_control_signal = " Control Signal: "
-                    prt_angle_msg = " Published Angle: "
-                    prt_spd_msg = " Published Speed: "
-                    prt_trq_msg = " Published Torque: "
+                    prt_angle = " Ang: "
+                    prt_spd = " Spd: "
+                    prt_spd_out = " Spd.out: "
+                    prt_trq_out = " Trq.out: "
+                    prt_control_signal = " Ctrl: "
+                    prt_angle_msg = " Ang-Msg: "
+                    prt_spd_msg = " Spd-Msg: "
+                    prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
-                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))
-                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%06d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Angle[i])))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%04.2f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%04d] " % (abs(MOTOR_SPEED[i].output)))
+                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%04d] " % (abs(MOTOR_TORQUE[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
-                        prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
-                        prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
-                        prt_trq_msg = prt_trq_msg + str(i) + "[" + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
-                    printing = "INFO PRINTING >>> "
+                        prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
+                        prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
+                        prt_trq_msg = prt_trq_msg + str(i) + "[" + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
+                    printing = ">>> "
                     if PRINT_Motor_Angle:
                         printing = printing + prt_angle
                     if PRINT_Motor_Speed:
