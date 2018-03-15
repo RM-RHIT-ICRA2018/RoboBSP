@@ -89,7 +89,7 @@ def CAN_RCV_LOOP():
     MOTOR_Phi = []
     MOTOR_Now = []
     motor_out = []
-    MOTOR_Updated = []
+    MOTOR_Updated = [False,False,False,False,True,True,True]
     MOTOR_ID_DES = []
     MOTOR_ANGLE_MSG_OUT = []
     MOTOR_SPEED_MSG_OUT = []
@@ -99,7 +99,7 @@ def CAN_RCV_LOOP():
         MOTOR_Phi.append(0.0)
         MOTOR_Now.append(0.0)
         motor_out.append(0.0)
-        MOTOR_Updated.append(False)
+        # MOTOR_Updated.append(False)
         MOTOR_ID_DES.append(i)
         MOTOR_ANGLE_MSG_OUT.append(0.0)
         MOTOR_SPEED_MSG_OUT.append(0.0)
@@ -155,7 +155,7 @@ def CAN_RCV_LOOP():
                     break
 
             if False not in MOTOR_Updated:
-                print("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac")
+                # print("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac")
                 if PRINT_MOTOR_INFO:
                     
                     prt_angle = " Angle: "
@@ -204,11 +204,11 @@ def CAN_RCV_LOOP():
                     CAN_PACK.append(int(int(motor_out[i])%256))
                 can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
-                # sock.send(can_pkt)
+                sock.send(can_pkt)
                 msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
                 #print(BSP_ERROR.info(msg_content))
                 #mqtt.publish("/MOTOR/", json.dumps(msg_content))
-                for i in range(mono):
+                for i in range(4):
                     MOTOR_Updated[i] = False
 
 
