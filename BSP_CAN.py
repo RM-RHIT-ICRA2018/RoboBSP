@@ -159,7 +159,7 @@ def CAN_RCV_LOOP():
                     if PRINT_ROLLING:
                         print(printing)
                     else:
-                        print("\r"+ printing, end="")
+                        print("\r"+ printing, end=""
                         
                 CAN_PACK = []
                 for i in range(mono):
