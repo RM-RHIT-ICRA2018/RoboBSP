@@ -64,8 +64,8 @@ def on_connect(client, userdata, flags, rc):
     t.start()
 
 def on_message(client, userdata, msg):
-    print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload))
-    payload = json.loads(msg.payload)
+    print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    payload = json.loads(msg.payload.decode("utf-8"))
     if payload["Type"] == "MotorTye":
         can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
         sock.send(can_pkt)
@@ -156,6 +156,7 @@ def CAN_RCV_LOOP():
 
             if False not in MOTOR_Updated:
                 if PRINT_MOTOR_INFO:
+                    print("\r" + "a", end="")
                     prt_angle = " Angle: "
                     prt_spd = " Motor Speed: "
                     prt_spd_out = " Speed.output: "
