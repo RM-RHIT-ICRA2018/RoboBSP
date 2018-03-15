@@ -2,7 +2,7 @@ import socket, struct, sys, json, time, os.path, threading,math
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = True
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 
 PRINT_Motor_Angle = False
@@ -14,7 +14,7 @@ PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
 
-CHASSIS_SPEED_INDEX = 1000
+CHASSIS_SPEED_INDEX = 2000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = len(MOTOR_ID_HEX)
 
@@ -29,7 +29,7 @@ for i in range(mono):
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
     MOTOR_SPEED[i].setSampleTime(0.001)
-    
+
 CHASSIS_TORQUE_SETTINS = {"P":0.1, "I":0, "D":0}
 MOTOR_TORQUE_SETTINS = []
 MOTOR_TORQUE = []
@@ -136,10 +136,10 @@ def CAN_RCV_LOOP():
 
                     MOTOR_SPEED[i].update(MOTOR_Phi[i]*100)
                     MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
-                   
+
                     MOTOR_TORQUE[i].update(torque)
                     motor_out[i] = MOTOR_TORQUE[i].output
-    
+
                     if motor_out[i] < 0 and abs(motor_out[i])>2**15:
                         motor_out[i] = -2**15
 
@@ -157,7 +157,7 @@ def CAN_RCV_LOOP():
             if False not in MOTOR_Updated:
                 # print("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac")
                 if PRINT_MOTOR_INFO:
-                    
+
                     prt_angle = " Angle: "
                     prt_spd = " Motor Speed: "
                     prt_spd_out = " Speed.output: "
@@ -169,7 +169,7 @@ def CAN_RCV_LOOP():
                     for i in range(mono):
                         prt_angle = prt_angle + str(i) + get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
                         prt_spd = prt_spd + str(i) + get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))                        
+                        prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))
                         prt_trq_out = prt_trq_out + str(i) + get_sign(MOTOR_TORQUE[i].output) + ("[%06d] " % (abs(MOTOR_TORQUE[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
                         prt_angle_msg = prt_angle_msg + str(i) + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
@@ -196,7 +196,7 @@ def CAN_RCV_LOOP():
                         print(printing)
                     else:
                         print("\r"+ printing, end="")
-                
+
 
                 CAN_PACK = []
                 for i in range(mono):
