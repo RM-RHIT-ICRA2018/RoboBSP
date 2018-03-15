@@ -66,11 +66,11 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
-    if payload["Type"] == "MotorTye":
-        can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
-        sock.send(can_pkt)
-        print(BSP_ERROR.info("SocketCAN Package Send"))
-    elif msg.topic == "/REMOTE/":
+    # if payload["Type"] == "MotorTye":
+    #     can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
+    #     sock.send(can_pkt)
+    #     print(BSP_ERROR.info("SocketCAN Package Send"))
+    if msg.topic == "/REMOTE/":
         Robot_X = payload["XSpeed"]
         Robot_Y = payload["YSpeed"]
         Robot_Phi = payload["PhiSpeed"]
