@@ -21,16 +21,35 @@ mono = len(MOTOR_ID_HEX)
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
 CHASSIS_SPEED_SETTINS = {"P":18, "I":0.0, "D":0.0}
+CHASSIS_TORQUE_SETTINS = {"P":0.1 ,"I":0.0, "D":0.0}
+
+GIMBAL_YAW_SPEED_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
+GIMBAL_YAW_TORQUE_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
+
+GIMBAL_PITCH_SPEED_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
+GIMBAL_PITCH_TORQUE_SETTINGS = {"P":1.0 ,"I":0.0, "D":0.0}
+
 MOTOR_SPEED_SETTINS = []
 MOTOR_SPEED = []
 MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 0, 0, 0]
-for i in range(mono):
+for i in range(4):
     MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINS)
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
-    MOTOR_SPEED[i].setSampleTime(0.001)
+    MOTOR_SPEED[i].setSampleTime(0.01)
 
-CHASSIS_TORQUE_SETTINS = {"P":0.1 ,"I":0.0, "D":0}
+i = 4
+MOTOR_SPEED_SETTINS.append(GIMBAL_YAW_SPEED_SETTINGS)
+MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
+MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
+MOTOR_SPEED[i].setSampleTime(0.01)
+
+i = 5
+MOTOR_SPEED_SETTINS.append(GIMBAL_PITCH_SPEED_SETTINGS)
+MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
+MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
+MOTOR_SPEED[i].setSampleTime(0.01)
+
 MOTOR_TORQUE_SETTINS = []
 MOTOR_TORQUE = []
 MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -39,6 +58,18 @@ for i in range(mono):
     MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
     MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
     MOTOR_TORQUE[i].setSampleTime(0.001)
+
+i = 4
+MOTOR_TORQUE_SETTINS.append(GIMBAL_YAW_TORQUE_SETTINGS)
+MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
+MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
+MOTOR_TORQUE[i].setSampleTime(0.001)
+
+i = 5
+MOTOR_TORQUE_SETTINS.append(GIMBAL_PITCH_TORQUE_SETTINGS)
+MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
+MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
+MOTOR_TORQUE[i].setSampleTime(0.001)
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -107,6 +138,8 @@ def CAN_RCV_LOOP():
     chs_data = [[],[],[],[]]
 
     mqtt_count = 0
+    phi_count = [0,0,0,0,0,0,0]
+
     while 1:
         can_pkt = sock.recv(16)
         can_id, length, data = struct.unpack(fmt, can_pkt)
@@ -126,16 +159,20 @@ def CAN_RCV_LOOP():
 
             for i in range(mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
-                    MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
-                    if MOTOR_Phi[i] > 180:
-                        MOTOR_Phi[i] = MOTOR_Phi[i] - 360
-                    elif MOTOR_Phi[i] < -180:
-                        MOTOR_Phi[i] = MOTOR_Phi[i] + 360
-                    MOTOR_Angle[i] = MOTOR_Now[i]
+                    if phi_count[i] > 10: #reduce the speed of phi
+                        MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                        MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
+                        if MOTOR_Phi[i] > 180:
+                            MOTOR_Phi[i] = MOTOR_Phi[i] - 360
+                        elif MOTOR_Phi[i] < -180:
+                            MOTOR_Phi[i] = MOTOR_Phi[i] + 360
+                        MOTOR_Angle[i] = MOTOR_Now[i]
 
-                    MOTOR_SPEED[i].update(MOTOR_Phi[i]*100)
-                    MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
+                        MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
+                        MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
+                        phi_count[i] = 0
+                    else:
+                        phi_count[i] = phi_count[i] + 1
 
                     MOTOR_TORQUE[i].update(torque)
                     motor_out[i] = MOTOR_TORQUE[i].output
@@ -199,10 +236,16 @@ def CAN_RCV_LOOP():
 
 
                 CAN_PACK = []
-                for i in range(mono):
+                for i in range(4):
                     CAN_PACK.append(int(int(motor_out[i])/256))
                     CAN_PACK.append(int(int(motor_out[i])%256))
                 can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
+
+                for i in range(mono - 4):
+                    CAN_PACK.append(int(int(motor_out[i+4])/256))
+                    CAN_PACK.append(int(int(motor_out[i+4])%256))
+                can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
+
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
                 sock.send(can_pkt)
                 if  mqtt_count > 50:

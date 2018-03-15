@@ -11,7 +11,7 @@ from tkinter import ttk
 import paho.mqtt.client as mqtt
 import json
 
-motor_num = 7
+motor_num = 8
 client = mqtt.Client()
 motor_directions = (1,1,1,1)
 labels = []
@@ -63,9 +63,10 @@ def on_message(client, userdata, msg):
     speedIn = payload.get("Speed")
     positionIn = payload.get("Angle")
     torqueIn = payload.get("Torque")
-    data.set('motorSpeeds', motorID, speedIn)
-    data.set('motorPositions', motorID, positionIn)
-    data.set('motorTorques', motorID, torqueIn)
+    for i in motorID:
+        data.set('motorSpeeds', i, speedIn[i])
+        data.set('motorPositions', i, positionIn[i])
+        data.set('motorTorques', i, torqueIn[i])
     updateToGUI()
     
     
