@@ -107,6 +107,7 @@ def on_message(client, userdata, msg):
         Robot_Phi = payload["PhiSpeed"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
+            
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
 
 def get_sign(num):
