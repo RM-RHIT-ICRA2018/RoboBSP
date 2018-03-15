@@ -170,7 +170,7 @@ def CAN_RCV_LOOP():
                 sock.send(can_pkt)
                 msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
                 #print(BSP_ERROR.info(msg_content))
-                #mqtt.publish("/MOTOR/", json.dumps(msg_content))
+                mqtt.publish("/MOTOR/", json.dumps(msg_content))
                 for i in range(4):
                     MOTOR_Updated[i] = False
 
