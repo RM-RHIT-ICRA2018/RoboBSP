@@ -134,134 +134,126 @@ def CAN_RCV_LOOP():
     phi_count = [0,0,0,0,0,0,0]
 
     while 1:
-        try:
-            can_pkt = sock.recv(16)
-            can_id, length, data = struct.unpack(fmt, can_pkt)
-            can_id &= socket.CAN_EFF_MASK
+        can_pkt = sock.recv(16)
+        can_id, length, data = struct.unpack(fmt, can_pkt)
+        can_id &= socket.CAN_EFF_MASK
 
 
-            data = data[:length]
+        data = data[:length]
 
-            if can_id in MOTOR_ID_HEX:
+        if can_id in MOTOR_ID_HEX:
 
-                torque = data[4]*256+data[5]
-                if torque >= 2**15:
-                    torque = torque-2**16
-                speed = data[2]*256+data[3]
-                if speed >= 2**15:
-                    speed = speed-2**16
+            torque = data[4]*256+data[5]
+            if torque >= 2**15:
+                torque = torque-2**16
+            speed = data[2]*256+data[3]
+            if speed >= 2**15:
+                speed = speed-2**16
 
-                for i in range(mono):
-                    if can_id == MOTOR_ID_HEX[i] :
-                        if phi_count[i] > 10: #reduce the speed of phi
-                            MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
-                            MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
-                            if MOTOR_Phi[i] > 180:
-                                MOTOR_Phi[i] = MOTOR_Phi[i] - 360
-                            elif MOTOR_Phi[i] < -180:
-                                MOTOR_Phi[i] = MOTOR_Phi[i] + 360
-                            MOTOR_Angle[i] = MOTOR_Now[i]
+            for i in range(mono):
+                if can_id == MOTOR_ID_HEX[i] :
+                    if phi_count[i] > 10: #reduce the speed of phi
+                        MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                        MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
+                        if MOTOR_Phi[i] > 180:
+                            MOTOR_Phi[i] = MOTOR_Phi[i] - 360
+                        elif MOTOR_Phi[i] < -180:
+                            MOTOR_Phi[i] = MOTOR_Phi[i] + 360
+                        MOTOR_Angle[i] = MOTOR_Now[i]
 
-                            if i in range(4):
-                                MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
-                            elif i in range(4,6):
-                                MOTOR_SPEED[i].update(MOTOR_Now[i])
-                            MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
-                            phi_count[i] = 0
-                        else:
-                            phi_count[i] = phi_count[i] + 1
-
-                        MOTOR_TORQUE[i].update(torque)
-                        motor_out[i] = MOTOR_TORQUE[i].output
-
-                        if motor_out[i] < 0 and abs(motor_out[i])>2**15:
-                            motor_out[i] = -2**15
-
-                        if motor_out[i] > 2**15:
-                            motor_out[i] = 2**15-1
-
-                        if motor_out[i] < 0:
-                            motor_out[i] = motor_out[i]+65536
-                        MOTOR_Updated[i] = True
-                        MOTOR_ANGLE_MSG_OUT[i] = (360.0)/(8191)*(data[0]*256+data[1])
-                        MOTOR_SPEED_MSG_OUT[i] = speed
-                        MOTOR_TORQUE_MSG_OUT[i] = torque
-                        break
-
-                if False not in MOTOR_Updated:
-                    if PRINT_MOTOR_INFO:
-
-                        prt_angle = " Angle: "
-                        prt_spd = " Motor Speed: "
-                        prt_spd_out = " Speed.output: "
-                        prt_trq_out = " Torque.output: "
-                        prt_control_signal = " Control Signal: "
-                        prt_angle_msg = " Published Angle: "
-                        prt_spd_msg = " Published Speed: "
-                        prt_trq_msg = " Published Torque: "
-                        for i in range(6):
-                            prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
-                            prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
-                            prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))
-                            prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%06d] " % (abs(MOTOR_TORQUE[i].output)))
-                            prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
-                            prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
-                            prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
-                            prt_trq_msg = prt_trq_msg + str(i) + "[" + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
-                        printing = "INFO PRINTING >>> "
-                        if PRINT_Motor_Angle:
-                            printing = printing + prt_angle
-                        if PRINT_Motor_Speed:
-                            printing = printing + prt_spd
-                        if PRINT_Speed_Output:
-                            printing = printing + prt_spd_out
-                        if PRINT_Torque_Output:
-                            printing = printing + prt_trq_out
-                        if PRINT_Control_Signal:
-                            printing = printing + prt_control_signal
-                        if PRINT_Angle_Massage:
-                            printing = printing + prt_angle_msg
-                        if PRINT_Speed_Massage:
-                            printing = printing + prt_spd_msg
-                        if PRINT_Torque_Massage:
-                            printing = printing + prt_trq_msg
-                        if PRINT_ROLLING:
-                            print(printing)
-                        else:
-
-                            print("\r"+ printing, end="")
-
-
-                    CAN_PACK = []
-                    for i in range(4):
-                        CAN_PACK.append(int(int(motor_out[i])/256))
-                        CAN_PACK.append(int(int(motor_out[i])%256))
-                    can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
-                    sock.send(can_pkt)
-                    CAN_PACK = []
-                    for i in range(3):
-                        CAN_PACK.append(int(int(motor_out[i+4])/256))
-                        CAN_PACK.append(int(int(motor_out[i+4])%256))
-                    can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
-
-                    #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
-                    sock.send(can_pkt)
-                    if  mqtt_count > 50:
-                        msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
-                        #print(BSP_ERROR.info(msg_content))
-                        client.publish("/MOTOR/", json.dumps(msg_content))
-                        mqtt_count = 0
+                        if i in range(4):
+                            MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
+                        elif i in range(4,6):
+                            MOTOR_SPEED[i].update(MOTOR_Now[i])
+                        MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
+                        phi_count[i] = 0
                     else:
-                        mqtt_count = mqtt_count + 1
-                    for i in range(4):
-                        MOTOR_Updated[i] = False
-        except KeyboardInterrupt:
-            print("Ctrl_C Interrupted")
-            can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
-            sock.send(can_pkt)
-            can_pkt = struct.pack(fmt, 0x1FF,8, bytes([0,0,0,0,0,0,0,0]))
-            sock.send(can_pkt)
-            exit()
+                        phi_count[i] = phi_count[i] + 1
+
+                    MOTOR_TORQUE[i].update(torque)
+                    motor_out[i] = MOTOR_TORQUE[i].output
+
+                    if motor_out[i] < 0 and abs(motor_out[i])>2**15:
+                        motor_out[i] = -2**15
+
+                    if motor_out[i] > 2**15:
+                        motor_out[i] = 2**15-1
+
+                    if motor_out[i] < 0:
+                        motor_out[i] = motor_out[i]+65536
+                    MOTOR_Updated[i] = True
+                    MOTOR_ANGLE_MSG_OUT[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                    MOTOR_SPEED_MSG_OUT[i] = speed
+                    MOTOR_TORQUE_MSG_OUT[i] = torque
+                    break
+
+            if False not in MOTOR_Updated:
+                if PRINT_MOTOR_INFO:
+
+                    prt_angle = " Angle: "
+                    prt_spd = " Motor Speed: "
+                    prt_spd_out = " Speed.output: "
+                    prt_trq_out = " Torque.output: "
+                    prt_control_signal = " Control Signal: "
+                    prt_angle_msg = " Published Angle: "
+                    prt_spd_msg = " Published Speed: "
+                    prt_trq_msg = " Published Torque: "
+                    for i in range(6):
+                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))
+                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%06d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
+                        prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
+                        prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
+                        prt_trq_msg = prt_trq_msg + str(i) + "[" + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
+                    printing = "INFO PRINTING >>> "
+                    if PRINT_Motor_Angle:
+                        printing = printing + prt_angle
+                    if PRINT_Motor_Speed:
+                        printing = printing + prt_spd
+                    if PRINT_Speed_Output:
+                        printing = printing + prt_spd_out
+                    if PRINT_Torque_Output:
+                        printing = printing + prt_trq_out
+                    if PRINT_Control_Signal:
+                        printing = printing + prt_control_signal
+                    if PRINT_Angle_Massage:
+                        printing = printing + prt_angle_msg
+                    if PRINT_Speed_Massage:
+                        printing = printing + prt_spd_msg
+                    if PRINT_Torque_Massage:
+                        printing = printing + prt_trq_msg
+                    if PRINT_ROLLING:
+                        print(printing)
+                    else:
+
+                        print("\r"+ printing, end="")
+
+
+                CAN_PACK = []
+                for i in range(4):
+                    CAN_PACK.append(int(int(motor_out[i])/256))
+                    CAN_PACK.append(int(int(motor_out[i])%256))
+                can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
+                sock.send(can_pkt)
+                CAN_PACK = []
+                for i in range(3):
+                    CAN_PACK.append(int(int(motor_out[i+4])/256))
+                    CAN_PACK.append(int(int(motor_out[i+4])%256))
+                can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
+
+                #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
+                sock.send(can_pkt)
+                if  mqtt_count > 50:
+                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
+                    #print(BSP_ERROR.info(msg_content))
+                    client.publish("/MOTOR/", json.dumps(msg_content))
+                    mqtt_count = 0
+                else:
+                    mqtt_count = mqtt_count + 1
+                for i in range(4):
+                    MOTOR_Updated[i] = False
 
 
 client = mqtt.Client()
@@ -272,3 +264,15 @@ print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
 client.loop_forever()
+
+try:
+    while True:
+        time.sleep(.1)
+except KeyboardInterrupt:
+            print("Ctrl_C Interrupted")
+            can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
+            sock.send(can_pkt)
+            can_pkt = struct.pack(fmt, 0x1FF,8, bytes([0,0,0,0,0,0,0,0]))
+            sock.send(can_pkt)
+            exit()
+
