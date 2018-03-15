@@ -2,7 +2,7 @@ import socket, struct, sys, json, time, os.path, threading,math
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = False
+PRINT_MOTOR_INFO = True
 PRINT_ROLLING = False
 
 PRINT_Motor_Angle = False
@@ -14,13 +14,13 @@ PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
 
-CHASSIS_SPEED_INDEX = 2000
+CHASSIS_SPEED_INDEX = 500
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = len(MOTOR_ID_HEX)
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
-CHASSIS_SPEED_SETTINS = {"P":10, "I":0, "D":0}
+CHASSIS_SPEED_SETTINS = {"P":18, "I":0.0, "D":0.0}
 MOTOR_SPEED_SETTINS = []
 MOTOR_SPEED = []
 MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 0, 0, 0]
@@ -30,6 +30,41 @@ for i in range(mono):
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
     MOTOR_SPEED[i].setSampleTime(0.001)
 
+CHASSIS_TORQUE_SETTINS = {"P":0.1 ,"I":0.0, "D":0}
+MOTOR_TORQUE_SETTINS = []
+MOTOR_TORQUE = []
+MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+for i in range(mono):
+    MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINS)
+    MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
+    MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
+    MOTOR_TORQUE[i].setSampleTime(0.001)
+
+print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
+fmt = "<IB3x8s" #Regex for CAN Protocol
+
+print(BSP_ERROR.info("Socket CAN Interface Start Binding."))
+sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW) #Socket CAN
+interface = "can0"
+
+try:
+    sock.bind((interface,))
+except OSError:
+    print(BSP_ERROR.fail("Could not bind to interface '%s'\n" % interface))
+    exit()
+
+print(BSP_ERROR.notice("Socker CAN Interface Binding Success."))
+
+def on_connect(client, userdata, flags, rc):
+    print(BSP_ERROR.notice("MQTT Interface Bind Success."))
+    client.subscribe("/CANBUS/#")
+    client.subscribe("/REMOTE/#")
+    print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
+    t = threading.Thread(target = CAN_RCV_LOOP)
+    t.start()
+
+def on_message(client, userdata, msg):
+    print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
     # if payload["Type"] == "MotorTye":
     #     can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
@@ -71,6 +106,7 @@ def CAN_RCV_LOOP():
         MOTOR_TORQUE_MSG_OUT.append(0.0)
     chs_data = [[],[],[],[]]
 
+    mqtt_count = 0
     while 1:
         can_pkt = sock.recv(16)
         can_id, length, data = struct.unpack(fmt, can_pkt)
@@ -78,7 +114,6 @@ def CAN_RCV_LOOP():
 
 
         data = data[:length]
-
 
         if can_id in MOTOR_ID_HEX:
 
@@ -101,10 +136,10 @@ def CAN_RCV_LOOP():
 
                     MOTOR_SPEED[i].update(MOTOR_Phi[i]*100)
                     MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
-                   
+
                     MOTOR_TORQUE[i].update(torque)
                     motor_out[i] = MOTOR_TORQUE[i].output
-    
+
                     if motor_out[i] < 0 and abs(motor_out[i])>2**15:
                         motor_out[i] = -2**15
 
@@ -121,7 +156,7 @@ def CAN_RCV_LOOP():
 
             if False not in MOTOR_Updated:
                 if PRINT_MOTOR_INFO:
-                    
+
                     prt_angle = " Angle: "
                     prt_spd = " Motor Speed: "
                     prt_spd_out = " Speed.output: "
@@ -131,14 +166,14 @@ def CAN_RCV_LOOP():
                     prt_spd_msg = " Published Speed: "
                     prt_trq_msg = " Published Torque: "
                     for i in range(mono):
-                        prt_angle = prt_angle + str(i) + "[" +get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + "[" +get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))                        
-                        prt_trq_out = prt_trq_out + str(i) + "[" +get_sign(MOTOR_TORQUE[i].output) + ("%06d] " % (abs(MOTOR_TORQUE[i].output)))
-                        prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256))))
-                        prt_angle_msg = prt_angle_msg + str(i) + "[" +get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
-                        prt_spd_msg = prt_spd_msg + str(i) + "[" +get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
-                        prt_trq_msg = prt_trq_msg + str(i) + "[" +get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("%06.4f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
+                        prt_angle = prt_angle + str(i) + get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
+                        prt_spd = prt_spd + str(i) + get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))
+                        prt_trq_out = prt_trq_out + str(i) + get_sign(MOTOR_TORQUE[i].output) + ("[%06d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
+                        prt_angle_msg = prt_angle_msg + str(i) + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
+                        prt_spd_msg = prt_spd_msg + str(i) + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
+                        prt_trq_msg = prt_trq_msg + str(i) + get_sign(MOTOR_TORQUE_MSG_OUT[i]) + ("[%06f] " % (abs(MOTOR_TORQUE_MSG_OUT[i])))
                     printing = "INFO PRINTING >>> "
                     if PRINT_Motor_Angle:
                         printing = printing + prt_angle
@@ -159,8 +194,10 @@ def CAN_RCV_LOOP():
                     if PRINT_ROLLING:
                         print(printing)
                     else:
-                        print("\r"+ printing, end=""
-                        
+
+                        print("\r"+ printing, end="")
+
+
                 CAN_PACK = []
                 for i in range(mono):
                     CAN_PACK.append(int(int(motor_out[i])/256))
@@ -168,9 +205,13 @@ def CAN_RCV_LOOP():
                 can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
                 sock.send(can_pkt)
-                msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
-                #print(BSP_ERROR.info(msg_content))
-                mqtt.publish("/MOTOR/", json.dumps(msg_content))
+                if  mqtt_count > 50:
+                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
+                    #print(BSP_ERROR.info(msg_content))
+                    client.publish("/MOTOR/", json.dumps(msg_content))
+                    mqtt_count = 0
+                else:
+                    mqtt_count = mqtt_count + 1
                 for i in range(4):
                     MOTOR_Updated[i] = False
 
