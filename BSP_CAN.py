@@ -16,7 +16,7 @@ PRINT_Torque_Massage = False
 
 CHASSIS_SPEED_INDEX = 500
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
-mono = len(MOTOR_ID_HEX)
+mono = 6
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
