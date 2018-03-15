@@ -53,7 +53,7 @@ MOTOR_SPEED[i].setSampleTime(0.01)
 MOTOR_TORQUE_SETTINS = []
 MOTOR_TORQUE = []
 MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-for i in range(mono):
+for i in range(4):
     MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINS)
     MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
     MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
@@ -157,7 +157,7 @@ def CAN_RCV_LOOP():
             if speed >= 2**15:
                 speed = speed-2**16
 
-            for i in range(mono):
+            for i in range(6):
                 if can_id == MOTOR_ID_HEX[i] :
                     if phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
@@ -202,7 +202,7 @@ def CAN_RCV_LOOP():
                     prt_angle_msg = " Published Angle: "
                     prt_spd_msg = " Published Speed: "
                     prt_trq_msg = " Published Torque: "
-                    for i in range(mono):
+                    for i in range(6):
                         prt_angle = prt_angle + str(i) + get_sign(MOTOR_Angle[i]) + ("[%06f] " % (abs(MOTOR_Angle[i])))
                         prt_spd = prt_spd + str(i) + get_sign(MOTOR_Phi[i]*100) + ("[%06f] " % (abs(MOTOR_Phi[i]*100)))
                         prt_spd_out = prt_spd_out + str(i) + get_sign(MOTOR_SPEED[i].output) + ("[%06d] " % (abs(MOTOR_SPEED[i].output)))
@@ -241,7 +241,7 @@ def CAN_RCV_LOOP():
                     CAN_PACK.append(int(int(motor_out[i])%256))
                 can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
 
-                for i in range(mono - 4):
+                for i in range(3):
                     CAN_PACK.append(int(int(motor_out[i+4])/256))
                     CAN_PACK.append(int(int(motor_out[i+4])%256))
                 can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
