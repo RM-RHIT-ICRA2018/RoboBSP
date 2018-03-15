@@ -120,7 +120,6 @@ def CAN_RCV_LOOP():
                     break
 
             if False not in MOTOR_Updated:
-                # print("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac")
                 if PRINT_MOTOR_INFO:
                     
                     prt_angle = " Angle: "
@@ -161,6 +160,7 @@ def CAN_RCV_LOOP():
                         print(printing)
                     else:
                         print("\r"+ printing, end=""
+                        
                 CAN_PACK = []
                 for i in range(mono):
                     CAN_PACK.append(int(int(motor_out[i])/256))
