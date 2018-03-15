@@ -4,10 +4,11 @@ import BSP_ERROR, BSP_PID as PID
 
 PRINT_MOTOR_INFO = True
 PRINT_ROLLING = False
+PRINT_RANGE = range(4,6)
 
-PRINT_Motor_Angle = False
-PRINT_Motor_Speed = True
-PRINT_Speed_Output = False
+PRINT_Motor_Angle = True
+PRINT_Motor_Speed = False
+PRINT_Speed_Output = True
 PRINT_Torque_Output = True
 PRINT_Control_Signal = False
 PRINT_Angle_Massage = False
@@ -23,10 +24,10 @@ version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
 CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
-GIMBAL_YAW_SPEED_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+GIMBAL_YAW_SPEED_SETTINGS = {"P":0.5 ,"I":0.0, "D":0.0}
 GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
-GIMBAL_PITCH_SPEED_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+GIMBAL_PITCH_SPEED_SETTINGS = {"P":0.5 ,"I":0.0, "D":0.0}
 GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 FEEDING_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
@@ -198,7 +199,7 @@ def CAN_RCV_LOOP():
                     prt_angle_msg = " Published Angle: "
                     prt_spd_msg = " Published Speed: "
                     prt_trq_msg = " Published Torque: "
-                    for i in range(6):
+                    for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%06.4f] " % (abs(MOTOR_Angle[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%06.4f] " % (abs(MOTOR_Phi[i]*100)))
                         prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%06d] " % (abs(MOTOR_SPEED[i].output)))
