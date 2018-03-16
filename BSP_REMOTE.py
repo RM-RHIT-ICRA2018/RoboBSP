@@ -49,6 +49,8 @@ for i in range(motor_num):
     AngleList.append([0] * 100)
     TorqueList.append([0] * 100)
 
+
+
 class DataHolder(object):
 #     a=1 #receive test
     input_enabled = False
@@ -85,7 +87,6 @@ def updateToGUI():
         labels[i].config(text=str(data.gyro[i-motor_num*3])+'  ')
     for i in range(motor_num*3+3,motor_num*3+6):
         labels[i].config(text=str(data.acce[i-(motor_num*3+3)])+'  ')
-    update_graph()
     
 
 def on_connect(client, userdata, flags, rc):
@@ -136,10 +137,11 @@ def control_key_released(keyNo):
 def enable_control():
     data.input_enabled = not data.input_enabled
 
-def update_graph():
+def update_graph(i):
     ani_ang.clear()
     ani_spd.clear()
     ani_trq.clear()
+    #print(""+str(SpeedList[5][99]))
 
     YListS = SpeedList[data.graph_motor]
     ani_spd.plot(XList,YListS)
@@ -149,26 +151,36 @@ def update_graph():
     ani_trq.plot(XList,YListT)
 
 def motor_slection(obs):
-    data.graph_motor = obs
+    data.graph_motor = obs.get()
 
-    
+def clearGraph():
+    SpeedList.clear()
+    AngleList.clear()
+    TorqueList.clear()
+
+    for i in range(motor_num):
+        SpeedList.append([0] * 100)
+        AngleList.append([0] * 100)
+        TorqueList.append([0] * 100)
+    print(" "+str(SpeedList[5][99]))
+
 
 def main():
     
-#    MQTT setup
+    #MQTT setup
     
-    # client.on_connect = on_connect
-    # client.on_message = on_message
+    client.on_connect = on_connect
+    client.on_message = on_message
     
-    # HOST = "192.168.1.2"
+    HOST = "192.168.1.2"
 
-    # print("MQTT client connecting to host ["+HOST+"]")
+    print("MQTT client connecting to host ["+HOST+"]")
     
-    # client.connect(HOST, 1883, 60)
+    client.connect(HOST, 1883, 60)
     
-    # client.loop_start()
+    client.loop_start()
     
-#    GUI setup
+    #GUI setup
 
     root = tkinter.Tk()
     
@@ -280,8 +292,8 @@ def main():
     
     gyro_acce_frame.grid(row=1)
     
-    update_button = ttk.Button(monitor_frame, width=20, text='Update')
-    update_button['command'] = (lambda: updateToGUI())
+    update_button = ttk.Button(monitor_frame, width=20, text='Clear Graph')
+    update_button['command'] = (lambda: clearGraph())
     update_button.grid(row=2)
 
     enable_control_check = ttk.Checkbutton(monitor_frame, text='Enable Keyboard Control')
@@ -296,9 +308,9 @@ def main():
 
     graph_frame = ttk.Labelframe(root, padding=10, text="Real-time Graphics")
 
-    ani_spd.plot(XList,YListS)
-    ani_ang.plot(XList,YListA)
-    ani_trq.plot(XList,YListT)
+    # ani_spd.plot(XList,YListS)
+    # ani_ang.plot(XList,YListA)
+    # ani_trq.plot(XList,YListT)
 
     canvas = FigureCanvasTkAgg(fig, graph_frame)
     canvas.show()
@@ -334,6 +346,7 @@ def main():
     root.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
     root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
     
+    ani = animation.FuncAnimation(fig, update_graph, interval=100)
     GUI_thread = threading.Thread(target=root.mainloop())
     GUI_thread.start() 
     
