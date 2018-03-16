@@ -24,11 +24,11 @@ version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
 CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
-GIMBAL_YAW_SPEED_SETTINGS = {"P":5.0 ,"I":0.0, "D":0.0}
-GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.8 ,"I":0.0, "D":0.0}
+GIMBAL_YAW_SPEED_SETTINGS = {"P":-60.0 ,"I":-8.0, "D":-2.0}
+GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
-GIMBAL_PITCH_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
-GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
+GIMBAL_PITCH_SPEED_SETTINGS = {"P":-65.0 ,"I":-6.5 ,"D":-6.5}
+GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.2 ,"I":0.0, "D":0.0}
 
 FEEDING_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
 FEEDING_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
@@ -36,7 +36,7 @@ FEEDING_TORQUE_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
 MOTOR_SPEED_SETTINS = []
 MOTOR_TORQUE_SETTINS = []
 for i in range(4):
-    MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINGS)        
+    MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINGS)
     MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINGS)
 MOTOR_SPEED_SETTINS.append(GIMBAL_YAW_SPEED_SETTINGS)
 MOTOR_TORQUE_SETTINS.append(GIMBAL_YAW_TORQUE_SETTINGS)
@@ -100,7 +100,7 @@ def on_message(client, userdata, msg):
         Robot_Phi = payload["PhiSpeed"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
-            
+
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
 
 def get_sign(num):
@@ -165,7 +165,7 @@ def CAN_RCV_LOOP():
                         if i in range(4):
                             MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
                         elif i in range(4,6):
-                            MOTOR_SPEED[i].update(MOTOR_Now[i])
+                            MOTOR_SPEED[i].update(MOTOR_Angle[i])
                         MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
                         phi_count[i] = 0
                     else:
@@ -173,6 +173,11 @@ def CAN_RCV_LOOP():
 
                     MOTOR_TORQUE[i].update(torque)
                     motor_out[i] = MOTOR_TORQUE[i].output
+
+                    if i == 4:
+                        motor_out[4] = MOTOR_SPEED[4].output
+                    if i == 5:
+                        motor_out[5] = MOTOR_SPEED[5].output
 
                     if motor_out[i] < 0 and abs(motor_out[i])>2**15:
                         motor_out[i] = -2**15
@@ -246,7 +251,7 @@ def CAN_RCV_LOOP():
 
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
                 sock.send(can_pkt)
-                if  mqtt_count > 50:
+                if  mqtt_count > 25:
                     msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
                     #print(BSP_ERROR.info(msg_content))
                     client.publish("/MOTOR/", json.dumps(msg_content))
