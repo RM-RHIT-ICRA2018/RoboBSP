@@ -43,6 +43,8 @@ SpeedList = []
 AngleList = []
 TorqueList = []
 
+UpdatingGraph = True
+
 
 for i in range(motor_num):
     SpeedList.append([0] * 100)
@@ -138,17 +140,22 @@ def enable_control():
     data.input_enabled = not data.input_enabled
 
 def update_graph(i):
-    ani_ang.clear()
-    ani_spd.clear()
-    ani_trq.clear()
-    #print(""+str(SpeedList[5][99]))
+    if UpdatingGraph:
+        ani_ang.clear()
+        ani_spd.clear()
+        ani_trq.clear()
+        #print(""+str(SpeedList[5][99]))
 
-    YListS = SpeedList[data.graph_motor]
-    ani_spd.plot(XList,YListS)
-    YListA = AngleList[data.graph_motor]
-    ani_ang.plot(XList,YListA)
-    YListT = TorqueList[data.graph_motor]
-    ani_trq.plot(XList,YListT)
+        YListS = SpeedList[data.graph_motor]
+        ani_spd.plot(XList,YListS)
+        YListA = AngleList[data.graph_motor]
+        ani_ang.plot(XList,YListA)
+        YListT = TorqueList[data.graph_motor]
+        ani_trq.plot(XList,YListT)
+
+        ani_spd.set_title("Speed")
+        ani_ang.set_title("Angle")
+        ani_trq.set_title("Torque")
 
 def motor_slection(obs):
     data.graph_motor = obs.get()
@@ -163,6 +170,15 @@ def clearGraph():
         AngleList.append([0] * 100)
         TorqueList.append([0] * 100)
     print(" "+str(SpeedList[5][99]))
+
+def freezeGraph(bott):
+    global UpdatingGraph
+    if UpdatingGraph:
+        UpdatingGraph = False
+        bott.config(text="Resume Graph")
+    else:
+        UpdatingGraph = True
+        bott.config(text="Freeze Graph")
 
 
 def main():
@@ -291,10 +307,6 @@ def main():
     acce_frame.grid(row=1)
     
     gyro_acce_frame.grid(row=1)
-    
-    update_button = ttk.Button(monitor_frame, width=20, text='Clear Graph')
-    update_button['command'] = (lambda: clearGraph())
-    update_button.grid(row=2)
 
     enable_control_check = ttk.Checkbutton(monitor_frame, text='Enable Keyboard Control')
     
@@ -327,6 +339,14 @@ def main():
         motor_radios[i].grid(column=i, row=0)
     
     motor_radio_frame.grid()
+
+    freeze_button = ttk.Button(graph_frame, width=20, text='Freeze Graph')
+    freeze_button['command'] = (lambda: freezeGraph(freeze_button))
+    freeze_button.grid()
+
+    clear_button = ttk.Button(graph_frame, width=20, text='Clear Graph')
+    clear_button['command'] = (lambda: clearGraph())
+    clear_button.grid()
 
     graph_frame.grid(column=1,row=0)    
     
