@@ -23,11 +23,24 @@ style.use("ggplot")
 motor_num = 8
 client = mqtt.Client()
 motor_directions = (1,1,1,1)
-labels = []
+motor_labels = []
+pid_labels = [[],[],[]]
+pid_entrys = [[],[],[]]
+pid_titles = ["pid1","pid2","pid3","pid4"]
 XList = range(100,0,-1)
 YListS = [0] * 100
 YListA = [0] * 100
 YListT = [0] * 100
+
+warning_labels = []
+
+PID_feedback = [[],[],[]]
+PID_set = [[],[],[]]
+for i in range(3):
+    for j in range(len(pid_titles)):
+        PID_feedback[i].append(0.0)
+        PID_set[i].append(0.0)
+    
 
 fig = Figure(figsize=(5,5), dpi=100)
 ani_spd = fig.add_subplot(3,1,1)
@@ -78,42 +91,76 @@ class DataHolder(object):
 data = DataHolder()
 
         
-def updateToGUI(): 
+def updateMotorToGUI(): 
     for i in range(motor_num):
-        labels[i].config(text=str(data.motorSpeeds[i])+'  ')
+        motor_labels[i].config(text=str(data.motorSpeeds[i])+'  ')
     for i in range(motor_num,motor_num*2):
-        labels[i].config(text=str(data.motorTorques[i-motor_num])+'  ')
+        motor_labels[i].config(text=str(data.motorTorques[i-motor_num])+'  ')
     for i in range(motor_num*2,motor_num*3):
-        labels[i].config(text=str(data.motorAngles[i-motor_num*2])+'  ')
+        motor_labels[i].config(text=str(data.motorAngles[i-motor_num*2])+'  ')
     for i in range(motor_num*3,motor_num*3+3):
-        labels[i].config(text=str(data.gyro[i-motor_num*3])+'  ')
+        motor_labels[i].config(text=str(data.gyro[i-motor_num*3])+'  ')
     for i in range(motor_num*3+3,motor_num*3+6):
-        labels[i].config(text=str(data.acce[i-(motor_num*3+3)])+'  ')
+        motor_labels[i].config(text=str(data.acce[i-(motor_num*3+3)])+'  ')
     
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
 
     client.subscribe("/MOTOR/")
+    client.subscribe("/PID_FEEDBACK/")
     
 def on_message(client, userdata, msg):
-    payload = json.loads(msg.payload.decode())
-    motorID = payload.get("ID")
-    speedIn = payload.get("Speed")
-    angleIn = payload.get("Angle")
-    torqueIn = payload.get("Torque")
-    for i in motorID:
-        data.set('motorSpeeds', i, speedIn[i])
-        data.set('motorAngles', i, angleIn[i])
-        data.set('motorTorques', i, torqueIn[i])
-        SpeedList[i].remove(SpeedList[i][0])
-        SpeedList[i].append(speedIn[i])
-        AngleList[i].remove(AngleList[i][0])
-        AngleList[i].append(angleIn[i])
-        TorqueList[i].remove(TorqueList[i][0])
-        TorqueList[i].append(torqueIn[i])
+    if msg.topic == "/MOTOR/":
+        payload = json.loads(msg.payload.decode())
+        motorID = payload.get("ID")
+        speedIn = payload.get("Speed")
+        angleIn = payload.get("Angle")
+        torqueIn = payload.get("Torque")
+        for i in motorID:
+            data.set('motorSpeeds', i, speedIn[i])
+            data.set('motorAngles', i, angleIn[i])
+            data.set('motorTorques', i, torqueIn[i])
+            if UpdatingGraph:
+                SpeedList[i].remove(SpeedList[i][0])
+                SpeedList[i].append(speedIn[i])
+                AngleList[i].remove(AngleList[i][0])
+                AngleList[i].append(angleIn[i])
+                TorqueList[i].remove(TorqueList[i][0])
+                TorqueList[i].append(torqueIn[i])
 
-    updateToGUI()
+        updateMotorToGUI()
+    elif msg.topic == "/PID_FEEDBACK/":
+        payload = json.loads(msg.payload.decode())
+        PIDs = []
+        PIDs.append(payload.get("Ps"))
+        PIDs.append(payload.get("Is"))
+        PIDs.append(payload.get("Ds"))
+        agree = payload.get("Agree")
+        if agree:
+            warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
+        else:
+            warning_labels[0].config(text="PID Settings Disagree",background='#f00')
+        udd = True
+        for i in range(3):
+            PID_feedback[i] = PIDs[i]
+            for j in range(len(PID_feedback[i])):
+                if PID_feedback[i][j] != PID_set[i][j]:
+                    udd = False
+                    break
+        if udd:
+            warning_labels[1].config(text="PID Settings Updated",background='#0f0')
+        else:
+            warning_labels[1].config(text="PID Settings Not Updated",background='#f00')
+
+
+
+
+def publishPID():
+    client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
+
+
+
     
     
 def sentControlMsg():
@@ -180,6 +227,13 @@ def freezeGraph(bott):
         UpdatingGraph = True
         bott.config(text="Freeze Graph")
 
+def updatePID():
+    for i in range(3):
+        for j in range(len(pid_titles)):
+            pid_text = pid_entrys[i][j].get()
+            pid_labels[i][j].config(text=pid_text)
+    publishPID()
+
 
 def main():
     
@@ -188,7 +242,7 @@ def main():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    HOST = "192.168.1.2"
+    HOST = "192.168.1.3"
 
     print("MQTT client connecting to host ["+HOST+"]")
     
@@ -218,7 +272,7 @@ def main():
         
         speed_label = ttk.Label(speed_frame, text=str(data.motorSpeeds[i])+'  ')
         speed_label.grid(row=i,column=1)
-        labels.append(speed_label)
+        motor_labels.append(speed_label)
         
     speed_frame.grid(row=0,column=1)
     
@@ -229,7 +283,7 @@ def main():
         
         torque_label = ttk.Label(torque_frame, text=str(data.motorTorques[i])+'  ')
         torque_label.grid(row=i,column=1)
-        labels.append(torque_label)
+        motor_labels.append(torque_label)
         
     torque_frame.grid(row=0,column=2)
     
@@ -240,7 +294,7 @@ def main():
         
         angle_label = ttk.Label(angle_frame, text=str(data.motorAngles[i])+'  ')
         angle_label.grid(row=i,column=1)
-        labels.append(angle_label)
+        motor_labels.append(angle_label)
         
     angle_frame.grid(row=0,column=3)
        
@@ -259,21 +313,21 @@ def main():
     
     gx_label = ttk.Label(gyro_frame, text=str(data.gyro[0])+'  ')
     gx_label.grid(row=0,column=2)
-    labels.append(gx_label)
+    motor_labels.append(gx_label)
     
     gy_title = ttk.Label(gyro_frame, text='y: ')
     gy_title.grid(row=0,column=3)
     
     gy_label = ttk.Label(gyro_frame, text=str(data.gyro[1])+'  ')
     gy_label.grid(row=0,column=4)
-    labels.append(gy_label)
+    motor_labels.append(gy_label)
     
     gz_title = ttk.Label(gyro_frame, text='z: ')
     gz_title.grid(row=0,column=5)
     
     gz_label = ttk.Label(gyro_frame, text=str(data.gyro[2])+'  ')
     gz_label.grid(row=0,column=6)
-    labels.append(gz_label)
+    motor_labels.append(gz_label)
     
     gyro_frame.grid(row=0)
     
@@ -288,21 +342,21 @@ def main():
     
     ax_label = ttk.Label(acce_frame, text=str(data.acce[0])+'  ')
     ax_label.grid(row=0,column=2)
-    labels.append(ax_label)
+    motor_labels.append(ax_label)
     
     ay_title = ttk.Label(acce_frame, text='y: ')
     ay_title.grid(row=0,column=3)
     
     ay_label = ttk.Label(acce_frame, text=str(data.acce[1])+'  ')
     ay_label.grid(row=0,column=4)
-    labels.append(ay_label)
+    motor_labels.append(ay_label)
     
     az_title = ttk.Label(acce_frame, text='z: ')
     az_title.grid(row=0,column=5)
     
     az_label = ttk.Label(acce_frame, text=str(data.acce[2])+'  ')
     az_label.grid(row=0,column=6)
-    labels.append(az_label)
+    motor_labels.append(az_label)
     
     acce_frame.grid(row=1)
     
@@ -349,6 +403,40 @@ def main():
     clear_button.grid()
 
     graph_frame.grid(column=1,row=0)    
+
+    PID_frame = ttk.Labelframe(root, padding=5, text="PID Adjustment")
+
+    warning_label_0 = ttk.Label(PID_frame,text="All PID Settings Agree",background='#0f0')
+    warning_label_0.grid()
+    warning_labels.append(warning_label_0)
+
+    warning_label_1 = ttk.Label(PID_frame,text="PID Settings Updated",background='#0f0')
+    warning_label_1.grid()
+    warning_labels.append(warning_label_1)
+
+    p_i_d = ["P:","I:","D:"]
+
+    for i in range(len(pid_titles)):
+        pid_frame = ttk.Labelframe(PID_frame,padding=1,text=pid_titles[i])
+        for j in range(3):
+            p_i_d_frame = ttk.Labelframe(pid_frame,padding=1,text=p_i_d[j])
+            p_i_d_label = ttk.Label(p_i_d_frame,text="000")
+            pid_labels[j].append(p_i_d_label)
+            p_i_d_label.grid()
+            p_i_d_entry = ttk.Entry(p_i_d_frame)
+            pid_entrys[j].append(p_i_d_entry)
+            p_i_d_entry.grid()
+            p_i_d_frame.grid(column=j,row=0)
+        pid_frame.grid()
+
+    clear_button = ttk.Button(PID_frame, width=20, text='Update PID Settings')
+    clear_button['command'] = (lambda: updatePID())
+    clear_button.grid()
+
+
+
+
+    PID_frame.grid(column=3,row=0)
     
     
     
