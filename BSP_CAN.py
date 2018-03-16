@@ -71,8 +71,17 @@ print(BSP_ERROR.info("Socket CAN Interface Start Binding."))
 sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW) #Socket CAN
 interface = "can0"
 
+def empty_socket(sock):
+    """remove the data present on the socket"""
+    input = [sock]
+    while 1:
+        inputready, o, e = select.select(input,[],[], 0.0)
+        if len(inputready)==0: break
+        for s in inputready: s.recv(1)
+
 try:
     sock.bind((interface,))
+    empty_socket(sock)
 except OSError:
     print(BSP_ERROR.fail("Could not bind to interface '%s'\n" % interface))
     exit()
