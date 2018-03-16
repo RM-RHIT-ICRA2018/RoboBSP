@@ -150,6 +150,10 @@ def update_graph(i):
     YListT = TorqueList[data.graph_motor]
     ani_trq.plot(XList,YListT)
 
+    ani_spd.set_title("Speed")
+    ani_ang.set_title("Angle")
+    ani_trq.set_title("Torque")
+
 def motor_slection(obs):
     data.graph_motor = obs.get()
 
@@ -291,10 +295,6 @@ def main():
     acce_frame.grid(row=1)
     
     gyro_acce_frame.grid(row=1)
-    
-    update_button = ttk.Button(monitor_frame, width=20, text='Clear Graph')
-    update_button['command'] = (lambda: clearGraph())
-    update_button.grid(row=2)
 
     enable_control_check = ttk.Checkbutton(monitor_frame, text='Enable Keyboard Control')
     
@@ -327,6 +327,10 @@ def main():
         motor_radios[i].grid(column=i, row=0)
     
     motor_radio_frame.grid()
+
+    update_button = ttk.Button(graph_frame, width=20, text='Clear Graph')
+    update_button['command'] = (lambda: clearGraph())
+    update_button.grid()
 
     graph_frame.grid(column=1,row=0)    
     
