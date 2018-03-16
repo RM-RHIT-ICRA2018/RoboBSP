@@ -10,28 +10,62 @@ import tkinter, threading, random
 from tkinter import ttk
 import paho.mqtt.client as mqtt
 import json
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import matplotlib.animation as animation
+from matplotlib import style
+
+style.use("ggplot")
+
 
 motor_num = 8
 client = mqtt.Client()
 motor_directions = (1,1,1,1)
 labels = []
+XList = range(100,0,-1)
+YListS = [0] * 100
+YListA = [0] * 100
+YListT = [0] * 100
+
+fig = Figure(figsize=(5,5), dpi=100)
+ani_spd = fig.add_subplot(3,1,1)
+ani_spd.set_title("Speed")
+ani_ang = fig.add_subplot(3,1,2)
+ani_ang.set_title("Angle")
+ani_trq = fig.add_subplot(3,1,3)
+ani_trq.set_title("Torque")
+
+
+
+SpeedList = []
+AngleList = []
+TorqueList = []
+
+
+for i in range(motor_num):
+    SpeedList.append([0] * 100)
+    AngleList.append([0] * 100)
+    TorqueList.append([0] * 100)
 
 class DataHolder(object):
 #     a=1 #receive test
     input_enabled = False
     motorSpeeds = []
-    motorPositions = []
+    motorAngles = []
     motorTorques = []
     gyro = [0.0,0.0,0.0] #[x,y,z]
     acce = [0.0,0.0,0.0] #[x,y,z]
     controlKeys = [0,0,0,0,0,0] #[w,a,s,d,q,e]
     key_press = 0
+    graph_motor = 0
 
 
     def __init__(self):
         for i in range(motor_num):
             self.motorSpeeds.append(0)
-            self.motorPositions.append(0.0)
+            self.motorAngles.append(0.0)
             self.motorTorques.append(0)
         
     def set(self, item_name, index, value):
@@ -46,11 +80,13 @@ def updateToGUI():
     for i in range(motor_num,motor_num*2):
         labels[i].config(text=str(data.motorTorques[i-motor_num])+'  ')
     for i in range(motor_num*2,motor_num*3):
-        labels[i].config(text=str(data.motorPositions[i-motor_num*2])+'  ')
+        labels[i].config(text=str(data.motorAngles[i-motor_num*2])+'  ')
     for i in range(motor_num*3,motor_num*3+3):
         labels[i].config(text=str(data.gyro[i-motor_num*3])+'  ')
     for i in range(motor_num*3+3,motor_num*3+6):
         labels[i].config(text=str(data.acce[i-(motor_num*3+3)])+'  ')
+    update_graph()
+    
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -61,12 +97,19 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())
     motorID = payload.get("ID")
     speedIn = payload.get("Speed")
-    positionIn = payload.get("Angle")
+    angleIn = payload.get("Angle")
     torqueIn = payload.get("Torque")
     for i in motorID:
         data.set('motorSpeeds', i, speedIn[i])
-        data.set('motorPositions', i, positionIn[i])
+        data.set('motorAngles', i, angleIn[i])
         data.set('motorTorques', i, torqueIn[i])
+        SpeedList[i].remove(SpeedList[i][0])
+        SpeedList[i].append(speedIn[i])
+        AngleList[i].remove(AngleList[i][0])
+        AngleList[i].append(angleIn[i])
+        TorqueList[i].remove(TorqueList[i][0])
+        TorqueList[i].append(torqueIn[i])
+
     updateToGUI()
     
     
@@ -79,26 +122,12 @@ def sentControlMsg():
     client.publish("/REMOTE/", json.dumps({"XSpeed": x, "YSpeed": y, "PhiSpeed": phi}))
     
 def control_key_pressed(keyNo):
-#     #receive test
-#     a=data.a 
-#     client.publish("/MOTOR/", json.dumps({"ID": 1, "Speed": a, "Angle": a/(a-0.5), "Torque": a*a}))
-#     client.publish("/MOTOR/", json.dumps({"ID": 3, "Speed": 2*a, "Angle": a-a*0.02+a/3, "Torque": a*a-a}))
-#     data.a = data.a+1
-    
-    
-    
     if data.input_enabled and data.controlKeys[keyNo] == 0:
         print(str(keyNo)+' Pressed')
         data.controlKeys[keyNo] = 1
         sentControlMsg()
         
 def control_key_released(keyNo):
-#     #receive test
-#     a=data.a 
-#     client.publish("/MOTOR/", json.dumps({"ID": 1, "Speed": a, "Angle": a/(a-0.5), "Torque": a*a}))
-#     client.publish("/MOTOR/", json.dumps({"ID": 3, "Speed": 2*a, "Angle": a-a*0.02+a/3, "Torque": a*a-a}))
-#     data.a = data.a+1
-    
     if data.input_enabled and data.controlKeys[keyNo] == 1:
         print(str(keyNo)+' Released')
         data.controlKeys[keyNo] = 0
@@ -106,23 +135,41 @@ def control_key_released(keyNo):
         
 def enable_control():
     data.input_enabled = not data.input_enabled
+
+def update_graph():
+    ani_ang.clear()
+    ani_spd.clear()
+    ani_trq.clear()
+
+    YListS = SpeedList[data.graph_motor]
+    ani_spd.plot(XList,YListS)
+    YListA = AngleList[data.graph_motor]
+    ani_ang.plot(XList,YListA)
+    YListT = TorqueList[data.graph_motor]
+    ani_trq.plot(XList,YListT)
+
+def motor_slection(obs):
+    data.graph_motor = obs
+
     
 
 def main():
     
 #    MQTT setup
     
-    client.on_connect = on_connect
-    client.on_message = on_message
+    # client.on_connect = on_connect
+    # client.on_message = on_message
     
-    HOST = "192.168.1.2"
+    # HOST = "192.168.1.2"
+
+    # print("MQTT client connecting to host ["+HOST+"]")
     
-    client.connect(HOST, 1883, 60)
+    # client.connect(HOST, 1883, 60)
     
-    client.loop_start()
+    # client.loop_start()
     
 #    GUI setup
-    
+
     root = tkinter.Tk()
     
     monitor_frame = ttk.Labelframe(root, padding=10, text='Status Monitor')
@@ -158,16 +205,16 @@ def main():
         
     torque_frame.grid(row=0,column=2)
     
-    position_frame = ttk.Frame(motors_frame) 
+    angle_frame = ttk.Frame(motors_frame) 
     for i in range(motor_num):
-        position_title = ttk.Label(position_frame, text='Position: ')
-        position_title.grid(row=i,column=0)
+        angle_title = ttk.Label(angle_frame, text='Angle: ')
+        angle_title.grid(row=i,column=0)
         
-        position_label = ttk.Label(position_frame, text=str(data.motorPositions[i])+'  ')
-        position_label.grid(row=i,column=1)
-        labels.append(position_label)
+        angle_label = ttk.Label(angle_frame, text=str(data.motorAngles[i])+'  ')
+        angle_label.grid(row=i,column=1)
+        labels.append(angle_label)
         
-    position_frame.grid(row=0,column=3)
+    angle_frame.grid(row=0,column=3)
        
     motors_frame.grid(row=0)
     
@@ -245,7 +292,31 @@ def main():
     
     enable_control_check.grid(row=3)
     
-    monitor_frame.grid(column=0)
+    monitor_frame.grid(column=0,row=0)
+
+    graph_frame = ttk.Labelframe(root, padding=10, text="Real-time Graphics")
+
+    ani_spd.plot(XList,YListS)
+    ani_ang.plot(XList,YListA)
+    ani_trq.plot(XList,YListT)
+
+    canvas = FigureCanvasTkAgg(fig, graph_frame)
+    canvas.show()
+    canvas.get_tk_widget().grid()
+
+    motor_radio_frame = ttk.Labelframe(graph_frame,padding=3,text="motor")
+
+    motor_radios = []
+    motor_radio_observer = tkinter.IntVar()
+    for i in range(motor_num):
+        motor_radios.append(ttk.Radiobutton(motor_radio_frame, text=('m'+str(i)), value=i))
+        motor_radios[i]['variable'] = motor_radio_observer
+        motor_radios[i]['command'] = lambda: motor_slection(motor_radio_observer)
+        motor_radios[i].grid(column=i, row=0)
+    
+    motor_radio_frame.grid()
+
+    graph_frame.grid(column=1,row=0)    
     
     
     
