@@ -19,6 +19,11 @@ from matplotlib import style
 
 style.use("ggplot")
 
+payloadM = {}
+payloadP = {}
+onMotor = False
+onPID = False
+
 
 motor_num = 8
 client = mqtt.Client()
@@ -93,15 +98,20 @@ data = DataHolder()
         
 def updateMotorToGUI(): 
     for i in range(motor_num):
-        motor_labels[i].config(text=str(data.motorSpeeds[i])+'  ')
+        prt = "%06d " % (data.motorSpeeds[i])
+        motor_labels[i].config(text=prt)
     for i in range(motor_num,motor_num*2):
-        motor_labels[i].config(text=str(data.motorTorques[i-motor_num])+'  ')
+        prt = "%06d " % (data.motorTorques[i-motor_num])
+        motor_labels[i].config(text=prt)
     for i in range(motor_num*2,motor_num*3):
-        motor_labels[i].config(text=str(data.motorAngles[i-motor_num*2])+'  ')
+        prt = "%06.2f " % (data.motorAngles[i-motor_num*2])
+        motor_labels[i].config(text=prt)
     for i in range(motor_num*3,motor_num*3+3):
-        motor_labels[i].config(text=str(data.gyro[i-motor_num*3])+'  ')
+        prt = "%06d " % (data.gyro[i-motor_num*3])
+        motor_labels[i].config(text=prt)
     for i in range(motor_num*3+3,motor_num*3+6):
-        motor_labels[i].config(text=str(data.acce[i-(motor_num*3+3)])+'  ')
+        prt = "%06d " % (data.acce[i-(motor_num*3+3)])
+        motor_labels[i].config(text=prt)
     
 
 def on_connect(client, userdata, flags, rc):
@@ -111,12 +121,30 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/PID_FEEDBACK/")
     
 def on_message(client, userdata, msg):
+    global onMotor
+    global onPID
+    global payloadM
+    global payloadP
     if msg.topic == "/MOTOR/":
-        payload = json.loads(msg.payload.decode())
-        motorID = payload.get("ID")
-        speedIn = payload.get("Speed")
-        angleIn = payload.get("Angle")
-        torqueIn = payload.get("Torque")
+        onMotor = True
+        payloadM = json.loads(msg.payload.decode())
+        
+    elif msg.topic == "/PID_FEEDBACK/":
+        onPID = True
+        payloadP = json.loads(msg.payload.decode())
+        
+def massageProcess():
+    global onMotor
+    global onPID
+    global payloadM
+    global payloadP
+    print("thread")
+    if onMotor:
+        print("onMotor")
+        motorID = payloadM.get("ID")
+        speedIn = payloadM.get("Speed")
+        angleIn = payloadM.get("Angle")
+        torqueIn = payloadM.get("Torque")
         for i in motorID:
             data.set('motorSpeeds', i, speedIn[i])
             data.set('motorAngles', i, angleIn[i])
@@ -130,13 +158,13 @@ def on_message(client, userdata, msg):
                 TorqueList[i].append(torqueIn[i])
 
         updateMotorToGUI()
-    elif msg.topic == "/PID_FEEDBACK/":
-        payload = json.loads(msg.payload.decode())
+        onMotor = False
+    if onPID:
         PIDs = []
-        PIDs.append(payload.get("Ps"))
-        PIDs.append(payload.get("Is"))
-        PIDs.append(payload.get("Ds"))
-        agree = payload.get("Agree")
+        PIDs.append(payloadP.get("Ps"))
+        PIDs.append(payloadP.get("Is"))
+        PIDs.append(payloadP.get("Ds"))
+        agree = payloadP.get("Agree")
         if agree:
             warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
         else:
@@ -152,6 +180,11 @@ def on_message(client, userdata, msg):
             warning_labels[1].config(text="PID Settings Updated",background='#0f0')
         else:
             warning_labels[1].config(text="PID Settings Not Updated",background='#f00')
+        onPID = False
+
+
+
+
 
 
 
@@ -235,6 +268,16 @@ def updatePID():
     publishPID()
 
 
+class MsgThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            massageProcess()
+            
+
+
 def main():
     
     #MQTT setup
@@ -242,7 +285,7 @@ def main():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    HOST = "192.168.1.3"
+    HOST = "192.168.1.8"
 
     print("MQTT client connecting to host ["+HOST+"]")
     
@@ -250,7 +293,7 @@ def main():
     
     client.loop_start()
     
-    #GUI setup
+    # GUI setup
 
     root = tkinter.Tk()
     
@@ -455,17 +498,22 @@ def main():
     root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
     
     ani = animation.FuncAnimation(fig, update_graph, interval=100)
-    GUI_thread = threading.Thread(target=root.mainloop())
-    GUI_thread.start() 
+    
+    Msg_thread = MsgThread()
+    Msg_thread.start()
+
+    root.mainloop()
+    
+    
     
         
-    
-    
+
+main()   
        
     
     
     
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
     
