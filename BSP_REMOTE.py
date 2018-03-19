@@ -86,9 +86,9 @@ class DataHolder(object):
 
     def __init__(self):
         for i in range(motor_num):
-            self.motorSpeeds.append(0)
-            self.motorAngles.append(0.0)
-            self.motorTorques.append(0)
+            self.motorSpeeds.append(000000)
+            self.motorAngles.append(000.00)
+            self.motorTorques.append(000000)
         
     def set(self, item_name, index, value):
         getattr(self, item_name)[index] = value
@@ -138,9 +138,9 @@ def massageProcess():
     global onPID
     global payloadM
     global payloadP
-    print("thread")
+    # print("thread")
     if onMotor:
-        print("onMotor")
+        # print("onMotor")
         motorID = payloadM.get("ID")
         speedIn = payloadM.get("Speed")
         angleIn = payloadM.get("Angle")
@@ -263,8 +263,11 @@ def freezeGraph(bott):
 def updatePID():
     for i in range(3):
         for j in range(len(pid_titles)):
-            pid_text = pid_entrys[i][j].get()
-            pid_labels[i][j].config(text=pid_text)
+            print(str(i)+str(j))
+            pid_fig = pid_entrys[i][j].get()
+            if not pid_fig == "":
+                pid_text = "%04.2f" % (float(pid_fig))
+                pid_labels[i][j].config(text=pid_text)
     publishPID()
 
 
