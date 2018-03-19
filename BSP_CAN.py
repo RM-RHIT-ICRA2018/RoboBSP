@@ -2,7 +2,7 @@ import socket, struct, sys, json, time, os.path, threading, math, pyserial
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = True
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 PRINT_RANGE = range(4,6)
 
@@ -15,9 +15,9 @@ PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
 
-CHASSIS_SPEED_INDEX = 500
+CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
-mono = 6
+mono = 7
 
 SHOTTER_MOTOR_REVERSE = False
 
@@ -32,7 +32,7 @@ CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 GIMBAL_YAW_SPEED_SETTINGS = {"P":-60.0 ,"I":-8.0, "D":-2.0}
 GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
-GIMBAL_PITCH_SPEED_SETTINGS = {"P":-65.0 ,"I":-6.5 ,"D":-6.5}
+GIMBAL_PITCH_SPEED_SETTINGS = {"P":-95.0 ,"I":-125.0 ,"D":-4.5}
 GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.2 ,"I":0.0, "D":0.0}
 
 FEEDING_SPEED_SETTINGS = {"P":0.0 ,"I":0.0, "D":0.0}
@@ -117,8 +117,11 @@ def on_message(client, userdata, msg):
         Robot_Phi = payload["PhiSpeed"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
-
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
+        return
+    if msg.topic == "/REMOTE/EXP":
+        MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
+        MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
 
 def get_sign(num):
     if num >= 0:
@@ -149,7 +152,6 @@ def CAN_RCV_LOOP():
         MOTOR_ANGLE_MSG_OUT.append(0.0)
         MOTOR_SPEED_MSG_OUT.append(0.0)
         MOTOR_TORQUE_MSG_OUT.append(0.0)
-    chs_data = [[],[],[],[]]
 
     mqtt_count = 0
     phi_count = [0,0,0,0,0,0,0]
@@ -159,6 +161,9 @@ def CAN_RCV_LOOP():
         can_id, length, data = struct.unpack(fmt, can_pkt)
         can_id &= socket.CAN_EFF_MASK
 
+        if length < 8:
+            print("Broken CAN Package Detected, DROP;")
+            continue
 
         data = data[:length]
 
@@ -261,8 +266,7 @@ def CAN_RCV_LOOP():
                     if PRINT_ROLLING:
                         print(printing)
                     else:
-
-                        print("\r"+ printing, end="")
+                        print("\r"+ printing)
 
 
                 CAN_PACK = []
