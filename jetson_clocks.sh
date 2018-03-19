@@ -28,8 +28,16 @@
 modprobe can
 modprobe can_raw
 modprobe mttcan
+
+modprobe usbserial
+insmod /lib/modules/4.4.38-tegra/kernel/drivers/misc/ch34x.ko
+
+modprobe cdc-acm
+
 ip link set can0 type can bitrate 1000000
+ip link set down can0
 ip link set up can0
+
 CONF_FILE=${HOME}/l4t_dfs.conf
 RED='\e[0;31m'
 GREEN='\e[0;32m'
