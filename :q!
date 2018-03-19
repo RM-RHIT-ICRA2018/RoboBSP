@@ -1,9 +1,8 @@
-import socket, struct, sys, json, time, os.path, threading, math
-import serial, select, pyvesc as esc
+import socket, struct, sys, json, time, os.path, threading, math, serial, select
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = 1
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 PRINT_RANGE = [6]
 
@@ -18,7 +17,7 @@ PRINT_Torque_Massage = False
 
 CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
-mono = 7
+mono = 8
 
 SHOTTER_MOTOR_REVERSE = False
 
@@ -36,8 +35,8 @@ GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 GIMBAL_PITCH_SPEED_SETTINGS = {"P":-95.0 ,"I":-125.0 ,"D":-4.5}
 GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.2 ,"I":0.0, "D":0.0}
 
-FEEDING_SPEED_SETTINGS = {"P":5.0 ,"I":5, "D":0.02}
-FEEDING_TORQUE_SETTINGS = {"P":0.5 ,"I":0.0, "D":0.0}
+FEEDING_SPEED_SETTINGS = {"P":10.0 ,"I":0.0, "D":0.0}
+FEEDING_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
 
 MOTOR_SPEED_SETTINS = []
 MOTOR_TORQUE_SETTINS = []
@@ -121,9 +120,8 @@ def on_message(client, userdata, msg):
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         return
     if msg.topic == "/REMOTE/EXP":
-        #MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
-        #MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
-        MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + payload["Pos"]
+        MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
+        MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
 
 def get_sign(num):
     if num >= 0:
@@ -184,7 +182,7 @@ def CAN_RCV_LOOP():
 
             for i in range(mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if 1:#phi_count[i] > 10: #reduce the speed of phi
+                    if phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
                         MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
                         if MOTOR_Phi[i] > 180:
@@ -240,7 +238,7 @@ def CAN_RCV_LOOP():
                     prt_spd_msg = " Spd-Msg: "
                     prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
-                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
+                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Angle[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%04.2f] " % (abs(MOTOR_Phi[i]*100)))
                         prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%04d] " % (abs(MOTOR_SPEED[i].output)))
                         prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%04d] " % (abs(MOTOR_TORQUE[i].output)))
