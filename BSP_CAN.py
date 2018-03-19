@@ -1,4 +1,4 @@
-import socket, struct, sys, json, time, os.path, threading,math
+import socket, struct, sys, json, time, os.path, threading, math, pyserial
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
@@ -19,7 +19,12 @@ CHASSIS_SPEED_INDEX = 500
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = 6
 
+SHOTTER_MOTOR_REVERSE = False
+
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
+
+
+SERIAL_COMM = []
 
 CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
 CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
@@ -46,7 +51,6 @@ MOTOR_SPEED_SETTINS.append(FEEDING_SPEED_SETTINGS)
 MOTOR_TORQUE_SETTINS.append(FEEDING_TORQUE_SETTINGS)
 
 
-
 MOTOR_SPEED = []
 MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 174, 174, 0]
 for i in range(mono):
@@ -58,11 +62,15 @@ for i in range(mono):
 
 MOTOR_TORQUE = []
 MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+MOTOR_TORQUE_LIMIT = [32768, 32768, 32768, 32768, 32768, 32768, 32768]
+
+for i in MOTOR_TORQUE_LIMIT:
+    assert i < 2**15 # THE MAX ABC_TORQUE IS 2**15
+
 for i in range(mono):
     MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
     MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
     MOTOR_TORQUE[i].setSampleTime(0.001)
-
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -123,16 +131,19 @@ def CAN_RCV_LOOP():
     MOTOR_Phi = []
     MOTOR_Now = []
     motor_out = []
+    MOTOR_Total = []
     MOTOR_Updated = [False,False,False,False,True,True,True]
     MOTOR_ID_DES = []
     MOTOR_ANGLE_MSG_OUT = []
     MOTOR_SPEED_MSG_OUT = []
     MOTOR_TORQUE_MSG_OUT = []
+    
     for i in range(7):
         MOTOR_Angle.append(0.0)
         MOTOR_Phi.append(0.0)
         MOTOR_Now.append(0.0)
         motor_out.append(0.0)
+        MOTOR_Total.append(0.0)
         # MOTOR_Updated.append(False)
         MOTOR_ID_DES.append(i)
         MOTOR_ANGLE_MSG_OUT.append(0.0)
@@ -150,6 +161,10 @@ def CAN_RCV_LOOP():
 
 
         data = data[:length]
+
+        if len(data) < 6: #Maybe a currupt can package
+            print(BSP_ERROR.fail("Currupt CAN Package Detected. Length: %d" % len(data)))
+            continue
 
         if can_id in MOTOR_ID_HEX:
 
@@ -170,11 +185,15 @@ def CAN_RCV_LOOP():
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
                         MOTOR_Angle[i] = MOTOR_Now[i]
+                        MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
 
                         if i in range(4):
                             MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
                         elif i in range(4,6):
                             MOTOR_SPEED[i].update(MOTOR_Angle[i])
+                        elif i in range(6,7):
+                            MOTOR_SPEED[i].update(MOTOR_Total[i])
+                            
                         MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
                         phi_count[i] = 0
                     else:
@@ -188,11 +207,11 @@ def CAN_RCV_LOOP():
                     if i == 5:
                         motor_out[5] = MOTOR_SPEED[5].output
 
-                    if motor_out[i] < 0 and abs(motor_out[i])>2**15:
-                        motor_out[i] = -2**15
+                    if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_TORQUE_LIMIT[i]:
+                        motor_out[i] = -MOTOR_TORQUE_LIMIT[i]
 
-                    if motor_out[i] > 2**15:
-                        motor_out[i] = 2**15-1
+                    if motor_out[i] > MOTOR_TORQUE_LIMIT[i]:
+                        motor_out[i] = MOTOR_TORQUE_LIMIT[i] - 1
 
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
