@@ -1,5 +1,5 @@
 import socket, struct, sys, json, time, os.path, threading, math
-import serial, select, pyvesc as esc
+import serial, select, copy, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
@@ -16,40 +16,51 @@ PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
 
+
 CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = 7
+
+init = []
+for i in range(mono):
+    init.append(True)
 
 SHOTTER_MOTOR_REVERSE = False
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 
+PID_Items = ["Chassis_Speed", "Chassis_Torque","Yaw_Speed","Yaw_Torque","Pitch_Speed","Pitch_Torque","Feeding_Speed","Feeding_Torque"]
+PID_Num = len(PID_Items)
 
 SERIAL_COMM = []
 
-CHASSIS_SPEED_SETTINGS = {"P":18, "I":0.0, "D":0.0}
-CHASSIS_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+PID_SETTINGS_SET = []
+PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Speed
+PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Torque
 
-GIMBAL_YAW_SPEED_SETTINGS = {"P":-60.0 ,"I":-8.0, "D":-2.0}
-GIMBAL_YAW_TORQUE_SETTINGS = {"P":0.1 ,"I":0.0, "D":0.0}
+PID_SETTINGS_SET.append({"P":-60.0 ,"I":-8.0, "D":-2.0})        #Yaw_Speed
+PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Torque
 
-GIMBAL_PITCH_SPEED_SETTINGS = {"P":-95.0 ,"I":-125.0 ,"D":-4.5}
-GIMBAL_PITCH_TORQUE_SETTINGS = {"P":0.2 ,"I":0.0, "D":0.0}
+PID_SETTINGS_SET.append({"P":-95.0 ,"I":-125.0 ,"D":-4.5})      #Pitch_Speed
+PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Torque
 
-FEEDING_SPEED_SETTINGS = {"P":5.0 ,"I":5, "D":0.02}
-FEEDING_TORQUE_SETTINGS = {"P":0.5 ,"I":0.0, "D":0.0}
+PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Speed
+PID_SETTINGS_SET.append({"P":0.5 ,"I":0.0, "D":0.0})            #Feeding_Torque
+
+PID_SETTINGS_REAL = copy.deepcopy(PID_SETTINGS_SET)
 
 MOTOR_SPEED_SETTINS = []
 MOTOR_TORQUE_SETTINS = []
+
 for i in range(4):
-    MOTOR_SPEED_SETTINS.append(CHASSIS_SPEED_SETTINGS)
-    MOTOR_TORQUE_SETTINS.append(CHASSIS_TORQUE_SETTINGS)
-MOTOR_SPEED_SETTINS.append(GIMBAL_YAW_SPEED_SETTINGS)
-MOTOR_TORQUE_SETTINS.append(GIMBAL_YAW_TORQUE_SETTINGS)
-MOTOR_SPEED_SETTINS.append(GIMBAL_PITCH_SPEED_SETTINGS)
-MOTOR_TORQUE_SETTINS.append(GIMBAL_PITCH_TORQUE_SETTINGS)
-MOTOR_SPEED_SETTINS.append(FEEDING_SPEED_SETTINGS)
-MOTOR_TORQUE_SETTINS.append(FEEDING_TORQUE_SETTINGS)
+    MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[0])
+    MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[1])
+MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[2])
+MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[3])
+MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[4])
+MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[5])
+MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[6])
+MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[7])
 
 
 MOTOR_SPEED = []
@@ -79,6 +90,18 @@ fmt = "<IB3x8s" #Regex for CAN Protocol
 print(BSP_ERROR.info("Socket CAN Interface Start Binding."))
 sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW) #Socket CAN
 interface = "can0"
+
+def update_PID():
+    for i in range(mono):
+        MOTOR_SPEED[i].clear()
+        MOTOR_SPEED[i].setKp(MOTOR_SPEED_SETTINS[i]["P"])
+        MOTOR_SPEED[i].setKi(MOTOR_SPEED_SETTINS[i]["I"])
+        MOTOR_SPEED[i].setKd(MOTOR_SPEED_SETTINS[i]["D"])
+        MOTOR_TORQUE[i].clear()
+        MOTOR_TORQUE[i].setKp(MOTOR_TORQUE_SETTINS[i]["P"])
+        MOTOR_TORQUE[i].setKi(MOTOR_TORQUE_SETTINS[i]["I"])
+        MOTOR_TORQUE[i].setKd(MOTOR_TORQUE_SETTINS[i]["D"])
+
 
 def empty_socket(sock):
     """remove the data present on the socket"""
@@ -120,10 +143,46 @@ def on_message(client, userdata, msg):
         for i in range(4):
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         return
+    elif msg.topic == "/PID_REMOTE/" :
+        Ps = payload.get("Ps")
+        Is = payload.get("Is")
+        Ds = payload.get("Ds")
+        for i in range(PID_Num):
+            PID_SETTINGS_REAL[i]["P"] = Ps[i]
+            PID_SETTINGS_REAL[i]["I"] = Is[i]
+            PID_SETTINGS_REAL[i]["D"] = Ds[i]
+        update_PID()
+        publish_real_pid()
+
     if msg.topic == "/REMOTE/EXP":
         #MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
         #MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
         MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + payload["Pos"]
+
+def compare_pid():
+    for i in range(PID_Num):
+        if PID_SETTINGS_REAL[i]["P"] != PID_SETTINGS_SET[i]["P"] or PID_SETTINGS_REAL[i]["I"] != PID_SETTINGS_SET[i]["I"] or PID_SETTINGS_REAL[i]["D"] != PID_SETTINGS_SET[i]["D"]:
+            return False
+    return True
+
+def publish_real_pid():
+    Ps = []
+    Is = []
+    Ds = []
+    for i in range(PID_Num/2):
+        Ps.append(MOTOR_SPEED[3+i].getP)
+        Is.append(MOTOR_SPEED[3+i].getI)
+        Ds.append(MOTOR_SPEED[3+i].getD)
+
+        Ps.append(MOTOR_TORQUE[3+i].getP)
+        Is.append(MOTOR_TORQUE[3+i].getI)
+        Ds.append(MOTOR_TORQUE[3+i].getD)
+    agree = compare_pid
+    pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
+    client.publish("/PID_FEEDBACK/", json.dumps(pid_msg))
+        
+
+
 
 def get_sign(num):
     if num >= 0:
@@ -186,6 +245,9 @@ def CAN_RCV_LOOP():
                 if can_id == MOTOR_ID_HEX[i] :
                     if 1:#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                        if init[i]:
+                            MOTOR_Angle[i] = MOTOR_Now[i]
+                            init[i] = False
                         MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
                         if MOTOR_Phi[i] > 180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] - 360

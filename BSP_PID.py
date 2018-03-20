@@ -48,7 +48,6 @@ class PID:
 
     def clear(self):
         """Clears PID computations and coefficients"""
-        self.SetPoint = 0.0
 
         self.PTerm = 0.0
         self.ITerm = 0.0
@@ -127,3 +126,13 @@ class PID:
         Based on a pre-determined sampe time, the PID decides if it should compute or return immediately.
         """
         self.sample_time = sample_time
+
+    def getP(self):
+        return self.Kp
+
+    def getI(self):
+        return self.Ki
+
+    def getD(self):
+        return self.Kd
+
