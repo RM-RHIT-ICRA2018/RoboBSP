@@ -1,5 +1,5 @@
 import socket, struct, sys, json, time, os.path, threading, math
-import serial, select, copy, pyvesc as esc
+import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
@@ -166,21 +166,22 @@ def compare_pid():
     return "True"
 
 def publish_real_pid():
+    #pdb.set_trace()
     Ps = []
     Is = []
     Ds = []
     for i in range(int(PID_Num/2)):
-        Ps.append(MOTOR_SPEED[3+i].getP)
-        Is.append(MOTOR_SPEED[3+i].getI)
-        Ds.append(MOTOR_SPEED[3+i].getD)
+        Ps.append(MOTOR_SPEED[3+i].getP())
+        Is.append(MOTOR_SPEED[3+i].getI())
+        Ds.append(MOTOR_SPEED[3+i].getD())
 
-        Ps.append(MOTOR_TORQUE[3+i].getP)
-        Is.append(MOTOR_TORQUE[3+i].getI)
-        Ds.append(MOTOR_TORQUE[3+i].getD)
-    agree = compare_pid
+        Ps.append(MOTOR_TORQUE[3+i].getP())
+        Is.append(MOTOR_TORQUE[3+i].getI())
+        Ds.append(MOTOR_TORQUE[3+i].getD())
+    agree = compare_pid()
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
     client.publish("/PID_FEEDBACK/", json.dumps(pid_msg))
-        
+
 
 
 
