@@ -41,7 +41,7 @@ PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Torque
 PID_SETTINGS_SET.append({"P":-60.0 ,"I":-8.0, "D":-2.0})        #Yaw_Speed
 PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Torque
 
-PID_SETTINGS_SET.append({"P":-95.0 ,"I":-125.0 ,"D":-4.5})      #Pitch_Speed
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0 ,"D":0.0})      #Pitch_Speed #{"P":-95.0 ,"I":-125.0 ,"D":-4.5}
 PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Torque
 
 PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Speed
@@ -64,7 +64,7 @@ MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[7])
 
 
 MOTOR_SPEED = []
-MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 174, 0, 0]
+MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 174, 174, 0]
 for i in range(mono):
     MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
     MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
