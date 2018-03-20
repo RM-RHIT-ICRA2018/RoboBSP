@@ -351,6 +351,7 @@ def CAN_RCV_LOOP():
                     msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
                     #print(BSP_ERROR.info(msg_content))
                     client.publish("/MOTOR/", json.dumps(msg_content))
+                    publish_real_pid()
                     mqtt_count = 0
                 else:
                     mqtt_count = mqtt_count + 1
