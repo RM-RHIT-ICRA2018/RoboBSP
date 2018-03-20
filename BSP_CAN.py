@@ -38,10 +38,10 @@ PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Speed
 PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Torque
 
-PID_SETTINGS_SET.append({"P":-60.0 ,"I":-8.0, "D":-2.0})        #Yaw_Speed
+PID_SETTINGS_SET.append({"P":-60.0 ,"I":-20.0, "D":-10.0})      #Yaw_Speed
 PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Torque
 
-PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0 ,"D":0.0})      #Pitch_Speed #{"P":-95.0 ,"I":-125.0 ,"D":-4.5}
+PID_SETTINGS_SET.append({"P":-65.0 ,"I":-8.0 ,"D":-12.0})       #Pitch_Speed
 PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Torque
 
 PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Speed
