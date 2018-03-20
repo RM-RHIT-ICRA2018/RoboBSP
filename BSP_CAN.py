@@ -124,6 +124,8 @@ def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
     client.subscribe("/CANBUS/#")
     client.subscribe("/REMOTE/#")
+    client.subscribe("/PID_REMOTE/#")
+
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
     t = threading.Thread(target = CAN_RCV_LOOP)
     t.start()
