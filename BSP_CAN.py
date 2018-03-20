@@ -1,5 +1,5 @@
 import socket, struct, sys, json, time, os.path, threading, math
-import serial, select, copy, pdb, pyvesc as esc
+import serial, select, copy, pdb, timer, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
@@ -16,10 +16,19 @@ PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
 
+ENABLE_Control_From_Shooter =   False
+ENABLE_Control_From_Decision =  False
+ENABLE_Control_From_Remote =    True
+
 
 CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = 7
+
+FEEDER_POS_TURN = 2300
+FEEDER_REV_TURN = -600
+
+PREVIOUS_SHOOT_TIME_COUNT = 0
 
 init = []
 for i in range(mono):
@@ -120,10 +129,15 @@ except OSError:
 
 print(BSP_ERROR.notice("Socker CAN Interface Binding Success."))
 
+def FeederReverseTurn():
+    #TODO: This is not OOP at all !!!
+    MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + FEEDER_REV_TURN
+
 def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
     client.subscribe("/CANBUS/#")
     client.subscribe("/REMOTE/#")
+    client.subscribe("/SHOOTER/PUB/#")
     client.subscribe("/PID_REMOTE/#")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
@@ -137,7 +151,7 @@ def on_message(client, userdata, msg):
     #     can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
     #     sock.send(can_pkt)
     #     print(BSP_ERROR.info("SocketCAN Package Send"))
-    if msg.topic == "/REMOTE/":
+    if msg.topic == "/REMOTE/" and ENABLE_Control_From_Remote:
         Robot_X = payload["XSpeed"]
         Robot_Y = payload["YSpeed"]
         Robot_Phi = payload["PhiSpeed"]
@@ -145,6 +159,17 @@ def on_message(client, userdata, msg):
         for i in range(4):
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         return
+    elif msg.topic == "/SHOOTER/PUB/" :
+        MOTOR_SPEED[4].SetPoint = MOTOR_SPEED[4].SetPoint + payload["YawPhi"]
+        MOTOR_SPEED[5].SetPoint = MOTOR_SPEED[5].SetPoint + payload["PitchPhi"]
+
+        if payload["ShootStatus"] == "Fire" and time.time() - PREVIOUS_SHOOT_TIME_COUNT > 0.1:
+            PREVIOUS_SHOOT_TIME_COUNT = time.time()
+            MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + FEEDER_POS_TURN
+            s = threading.Timer(0.1, FeederReverseTurn)
+            s.start()
+
+
     elif msg.topic == "/PID_REMOTE/" :
         Ps = payload.get("Ps")
         Is = payload.get("Is")
@@ -156,6 +181,11 @@ def on_message(client, userdata, msg):
         print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
+    elif msg.topic == "/REMOTE/SWITCH":
+        ENABLE_Control_From_Decision = payload["CTRL_Decision"] 
+        ENABLE_Control_From_Remote = payload["CTRL_Remote"]
+        ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
+
 
     if msg.topic == "/REMOTE/EXP":
         #MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
