@@ -169,7 +169,7 @@ def publish_real_pid():
     Ps = []
     Is = []
     Ds = []
-    for i in range(PID_Num/2):
+    for i in range(int(PID_Num/2)):
         Ps.append(MOTOR_SPEED[3+i].getP)
         Is.append(MOTOR_SPEED[3+i].getI)
         Ds.append(MOTOR_SPEED[3+i].getD)
