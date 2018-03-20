@@ -160,7 +160,7 @@ def on_message(client, userdata, msg):
         MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + payload["Pos"]
 
 def compare_pid():
-    for i in range(PID_Num):
+    for i in range(int(PID_Num)):
         if PID_SETTINGS_REAL[i]["P"] != PID_SETTINGS_SET[i]["P"] or PID_SETTINGS_REAL[i]["I"] != PID_SETTINGS_SET[i]["I"] or PID_SETTINGS_REAL[i]["D"] != PID_SETTINGS_SET[i]["D"]:
             return False
     return True
