@@ -31,11 +31,16 @@ motor_directions = (1,1,1,1)
 motor_labels = []
 pid_labels = [[],[],[]]
 pid_entrys = [[],[],[]]
-pid_titles = ["pid1","pid2","pid3","pid4"]
+pid_titles = ["Chassis_Speed", "Chassis_Torque","Yaw_Speed","Yaw_Torque","Pitch_Speed","Pitch_Torque","Feeding_Speed","Feeding_Torque"]
 XList = range(100,0,-1)
 YListS = [0] * 100
 YListA = [0] * 100
 YListT = [0] * 100
+
+init = [[],[],[]]
+for i in range(3):
+    for j in range(len(pid_titles)):
+        init[i].append(True)
 
 warning_labels = []
 
@@ -165,7 +170,7 @@ def massageProcess():
         PIDs.append(payloadP.get("Is"))
         PIDs.append(payloadP.get("Ds"))
         agree = payloadP.get("Agree")
-        if agree:
+        if agree == "True":
             warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
         else:
             warning_labels[0].config(text="PID Settings Disagree",background='#f00')
@@ -173,9 +178,15 @@ def massageProcess():
         for i in range(3):
             PID_feedback[i] = PIDs[i]
             for j in range(len(PID_feedback[i])):
-                if PID_feedback[i][j] != PID_set[i][j]:
-                    udd = False
-                    break
+                if PID_feedback[i][j] != float(pid_labels[i][j].cget("text")):
+                    if init[i][j]:
+                        PID_set[i][j] = float(PID_feedback[i][j])
+                        pid_text = "%04.2f" % (float(PID_feedback[i][j]))
+                        pid_labels[i][j].config(text=pid_text)
+                        init[i][j] = False
+                    else:
+                        udd = False
+                        break
         if udd:
             warning_labels[1].config(text="PID Settings Updated",background='#0f0')
         else:
@@ -268,6 +279,7 @@ def updatePID():
             if not pid_fig == "":
                 pid_text = "%04.2f" % (float(pid_fig))
                 pid_labels[i][j].config(text=pid_text)
+                PID_set[i][j] = float(pid_fig)
     publishPID()
 
 
@@ -288,7 +300,7 @@ def main():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    HOST = "192.168.1.8"
+    HOST = "192.168.1.2"
 
     print("MQTT client connecting to host ["+HOST+"]")
     
