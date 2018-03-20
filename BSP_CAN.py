@@ -3,7 +3,7 @@ import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
-PRINT_MOTOR_INFO = 1
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 PRINT_RANGE = [6]
 
@@ -151,6 +151,7 @@ def on_message(client, userdata, msg):
             PID_SETTINGS_REAL[i]["P"] = Ps[i]
             PID_SETTINGS_REAL[i]["I"] = Is[i]
             PID_SETTINGS_REAL[i]["D"] = Ds[i]
+        print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
 
