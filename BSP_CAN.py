@@ -1,5 +1,5 @@
 import socket, struct, sys, json, time, os.path, threading, math
-import serial, select, copy, pdb, timer, pyvesc as esc
+import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 
@@ -182,7 +182,7 @@ def on_message(client, userdata, msg):
         update_PID()
         publish_real_pid()
     elif msg.topic == "/REMOTE/SWITCH":
-        ENABLE_Control_From_Decision = payload["CTRL_Decision"] 
+        ENABLE_Control_From_Decision = payload["CTRL_Decision"]
         ENABLE_Control_From_Remote = payload["CTRL_Remote"]
         ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
 
