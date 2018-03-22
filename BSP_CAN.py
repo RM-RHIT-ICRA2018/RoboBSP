@@ -307,13 +307,15 @@ def CAN_RCV_LOOP():
                     else:
                         phi_count[i] = phi_count[i] + 1
 
-                    MOTOR_TORQUE[i].update(torque)
+                    
+
+                    if i in range(4,6):
+                        MOTOR_TORQUE[i].update(MOTOR_Phi[i]*10)
+
                     motor_out[i] = MOTOR_TORQUE[i].output
 
-                    if i == 4:
-                        motor_out[4] = MOTOR_SPEED[4].output
-                    if i == 5:
-                        motor_out[5] = MOTOR_SPEED[5].output
+                    # if i in range(4,6):
+                    #     motor_out[i] = MOTOR_SPEED[i].output
 
                     if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_TORQUE_LIMIT[i]:
                         motor_out[i] = -MOTOR_TORQUE_LIMIT[i]
