@@ -2,6 +2,9 @@ import socket, struct, sys, json, time, os.path, threading, math
 import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
+import BSP_ROBOT_CONFIG as ROB
+
+rob = ROB.robot()
 
 PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
@@ -9,8 +12,8 @@ PRINT_RANGE = [6]
 
 PRINT_Motor_Angle = True
 PRINT_Motor_Speed = False
-PRINT_Speed_Output = True
-PRINT_Torque_Output = True
+PRINT_Upper_Output = True
+PRINT_Lower_Output = True
 PRINT_Control_Signal = False
 PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
@@ -20,10 +23,8 @@ ENABLE_Control_From_Shooter =   False
 ENABLE_Control_From_Decision =  False
 ENABLE_Control_From_Remote =    True
 
-
 CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
-mono = 7
 
 Remote_Pitch = 0
 Remote_Yaw = 0
@@ -34,67 +35,68 @@ FEEDER_REV_TURN = -600
 PREVIOUS_SHOOT_TIME_COUNT = 0
 
 init = []
-for i in range(mono):
+for i in range(rob.mono):
     init.append(True)
 
 SHOTTER_MOTOR_REVERSE = False
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
+PID_Num = len(rob.PID_Items)
 
-PID_Items = ["Chassis_Speed", "Chassis_Torque","Yaw_Speed","Yaw_Torque","Pitch_Speed","Pitch_Torque","Feeding_Speed","Feeding_Torque"]
-PID_Num = len(PID_Items)
 
 SERIAL_COMM = []
 
 PID_SETTINGS_SET = []
-PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Speed
-PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Torque
+PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Upper
+PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Lower
 
-PID_SETTINGS_SET.append({"P":-60.0 ,"I":-20.0, "D":-10.0})      #Yaw_Speed
-PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Torque
+PID_SETTINGS_SET.append({"P":-60.0 ,"I":-20.0, "D":-10.0})      #Yaw_Upper
+PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Lower
 
-PID_SETTINGS_SET.append({"P":-65.0 ,"I":-8.0 ,"D":-12.0})       #Pitch_Speed
-PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Torque
+PID_SETTINGS_SET.append({"P":-65.0 ,"I":-8.0 ,"D":-12.0})       #Pitch_Upper
+PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Lower
 
-PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Speed
-PID_SETTINGS_SET.append({"P":0.5 ,"I":0.0, "D":0.0})            #Feeding_Torque
+PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Upper
+PID_SETTINGS_SET.append({"P":0.5 ,"I":0.0, "D":0.0})            #Feeding_Lower
 
 PID_SETTINGS_REAL = copy.deepcopy(PID_SETTINGS_SET)
 
-MOTOR_SPEED_SETTINS = []
-MOTOR_TORQUE_SETTINS = []
+MOTOR_UPPER_SETTINS = []
+MOTOR_LOWER_SETTINS = []
 
 for i in range(4):
-    MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[0])
-    MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[1])
-MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[2])
-MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[3])
-MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[4])
-MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[5])
-MOTOR_SPEED_SETTINS.append(PID_SETTINGS_REAL[6])
-MOTOR_TORQUE_SETTINS.append(PID_SETTINGS_REAL[7])
+    MOTOR_UPPER_SETTINS.append(PID_SETTINGS_REAL[0])
+    MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[1])
+MOTOR_UPPER_SETTINS.append(PID_SETTINGS_REAL[2])
+MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[3])
+MOTOR_UPPER_SETTINS.append(PID_SETTINGS_REAL[4])
+MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[5])
+MOTOR_UPPER_SETTINS.append(PID_SETTINGS_REAL[6])
+MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[7])
 
 
-MOTOR_SPEED = []
-MOTOR_SPEED_SetPoints = [0, 0, 0, 0, 174, 174, 0]
-for i in range(mono):
-    MOTOR_SPEED.append(PID.PID(MOTOR_SPEED_SETTINS[i]["P"], MOTOR_SPEED_SETTINS[i]["I"], MOTOR_SPEED_SETTINS[i]["D"]))
-    MOTOR_SPEED[i].SetPoint=MOTOR_SPEED_SetPoints[i]
-    MOTOR_SPEED[i].setSampleTime(0.01)
+MOTOR_UPPER = []
+MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
+SKIP_UPPER = []
+for i in range(rob.mono):
+    MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"]))
+    MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
+    MOTOR_UPPER[i].setSampleTime(0.01)
+    SKIP_UPPER.append(False)
 
 
 
-MOTOR_TORQUE = []
-MOTOR_TORQUE_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-MOTOR_TORQUE_LIMIT = [32768, 32768, 32768, 32768, 20000, 20000, 32768]
+MOTOR_LOWER = []
+MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+MOTOR_LOWER_LIMIT = [32768, 32768, 32768, 32768, 20000, 20000, 32768]
 
-for i in MOTOR_TORQUE_LIMIT:
-    assert i <= 2**15 # THE MAX ABC_TORQUE IS 2**15
+for i in MOTOR_LOWER_LIMIT:
+    assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
 
-for i in range(mono):
-    MOTOR_TORQUE.append(PID.PID(MOTOR_TORQUE_SETTINS[i]["P"], MOTOR_TORQUE_SETTINS[i]["I"], MOTOR_TORQUE_SETTINS[i]["D"]))
-    MOTOR_TORQUE[i].SetPoint=MOTOR_TORQUE_SetPoints[i]
-    MOTOR_TORQUE[i].setSampleTime(0.001)
+for i in range(rob.mono):
+    MOTOR_LOWER.append(PID.PID(MOTOR_LOWER_SETTINS[i]["P"], MOTOR_LOWER_SETTINS[i]["I"], MOTOR_LOWER_SETTINS[i]["D"]))
+    MOTOR_LOWER[i].SetPoint=MOTOR_LOWER_SetPoints[i]
+    MOTOR_LOWER[i].setSampleTime(0.001)
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -104,15 +106,15 @@ sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW) #Socket CAN
 interface = "can0"
 
 def update_PID():
-    for i in range(mono):
-        MOTOR_SPEED[i].clear()
-        MOTOR_SPEED[i].setKp(MOTOR_SPEED_SETTINS[i]["P"])
-        MOTOR_SPEED[i].setKi(MOTOR_SPEED_SETTINS[i]["I"])
-        MOTOR_SPEED[i].setKd(MOTOR_SPEED_SETTINS[i]["D"])
-        MOTOR_TORQUE[i].clear()
-        MOTOR_TORQUE[i].setKp(MOTOR_TORQUE_SETTINS[i]["P"])
-        MOTOR_TORQUE[i].setKi(MOTOR_TORQUE_SETTINS[i]["I"])
-        MOTOR_TORQUE[i].setKd(MOTOR_TORQUE_SETTINS[i]["D"])
+    for i in range(rob.mono):
+        MOTOR_UPPER[i].clear()
+        MOTOR_UPPER[i].setKp(MOTOR_UPPER_SETTINS[i]["P"])
+        MOTOR_UPPER[i].setKi(MOTOR_UPPER_SETTINS[i]["I"])
+        MOTOR_UPPER[i].setKd(MOTOR_UPPER_SETTINS[i]["D"])
+        MOTOR_LOWER[i].clear()
+        MOTOR_LOWER[i].setKp(MOTOR_LOWER_SETTINS[i]["P"])
+        MOTOR_LOWER[i].setKi(MOTOR_LOWER_SETTINS[i]["I"])
+        MOTOR_LOWER[i].setKd(MOTOR_LOWER_SETTINS[i]["D"])
 
 
 def empty_socket(sock):
@@ -134,7 +136,7 @@ print(BSP_ERROR.notice("Socker CAN Interface Binding Success."))
 
 def FeederReverseTurn():
     #TODO: This is not OOP at all !!!
-    MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + FEEDER_REV_TURN
+    MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_REV_TURN
 
 def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
@@ -142,12 +144,14 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/REMOTE/#")
     client.subscribe("/SHOOTER/PUB/#")
     client.subscribe("/PID_REMOTE/#")
+    client.subscribe("/CONFIG/#")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
     t = threading.Thread(target = CAN_RCV_LOOP)
     t.start()
 
 def on_message(client, userdata, msg):
+    global ENABLE_Control_From_Remote
     print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
     # if payload["Type"] == "MotorTye":
@@ -162,15 +166,28 @@ def on_message(client, userdata, msg):
         Remote_Pitch = payload["Pitch"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
-            MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
+            MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         return
+
+    elif msg.topic == "/CONFIG/":
+        Config_Type = payload["Type"]
+        Config_Set = payload["Set"]
+        for i in range(rob.mono):
+            if Config_Type == "Upper":
+                SKIP_UPPER[i] = False
+                MOTOR_UPPER[i].SetPoint = Config_Set[i]
+            elif Config_Type == "Lower":
+                SKIP_UPPER[i] = False
+                MOTOR_LOWER[i].SetPoint = Config_Set[i]
+
     elif msg.topic == "/SHOOTER/PUB/" :
-        MOTOR_SPEED[4].SetPoint = MOTOR_SPEED[4].SetPoint + payload["YawPhi"]
-        MOTOR_SPEED[5].SetPoint = MOTOR_SPEED[5].SetPoint + payload["PitchPhi"]
+        global PREVIOUS_SHOOT_TIME_COUNT
+        MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + payload["YawPhi"]
+        MOTOR_UPPER[5].SetPoint = MOTOR_UPPER[5].SetPoint + payload["PitchPhi"]
 
         if payload["ShootStatus"] == "Fire" and time.time() - PREVIOUS_SHOOT_TIME_COUNT > 0.1:
             PREVIOUS_SHOOT_TIME_COUNT = time.time()
-            MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + FEEDER_POS_TURN
+            MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_POS_TURN
             s = threading.Timer(0.1, FeederReverseTurn)
             s.start()
 
@@ -193,9 +210,9 @@ def on_message(client, userdata, msg):
 
 
     if msg.topic == "/REMOTE/EXP":
-        MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
-        MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
-        MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + payload["Pos"]
+        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
+        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
+        MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
 
 def compare_pid():
     for i in range(int(PID_Num)):
@@ -209,13 +226,13 @@ def publish_real_pid():
     Is = []
     Ds = []
     for i in range(int(PID_Num/2)):
-        Ps.append(MOTOR_SPEED[3+i].getP())
-        Is.append(MOTOR_SPEED[3+i].getI())
-        Ds.append(MOTOR_SPEED[3+i].getD())
+        Ps.append(MOTOR_UPPER[3+i].getP())
+        Is.append(MOTOR_UPPER[3+i].getI())
+        Ds.append(MOTOR_UPPER[3+i].getD())
 
-        Ps.append(MOTOR_TORQUE[3+i].getP())
-        Is.append(MOTOR_TORQUE[3+i].getI())
-        Ds.append(MOTOR_TORQUE[3+i].getD())
+        Ps.append(MOTOR_LOWER[3+i].getP())
+        Is.append(MOTOR_LOWER[3+i].getI())
+        Ds.append(MOTOR_LOWER[3+i].getD())
     agree = compare_pid()
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
     client.publish("/PID_FEEDBACK/", json.dumps(pid_msg))
@@ -280,7 +297,7 @@ def CAN_RCV_LOOP():
             if speed >= 2**15:
                 speed = speed-2**16
 
-            for i in range(mono):
+            for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
                     if 1:#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
@@ -295,33 +312,34 @@ def CAN_RCV_LOOP():
                         MOTOR_Angle[i] = MOTOR_Now[i]
                         MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
 
-                        if i in range(4):
-                            MOTOR_SPEED[i].update(MOTOR_Phi[i]*10)
-                        elif i in range(4,6):
-                            MOTOR_SPEED[i].update(MOTOR_Angle[i])
-                        elif i in range(6,7):
-                            MOTOR_SPEED[i].update(MOTOR_Total[i])
+                        if rob.UPPER_PID_TYPE[i] == "SPD":
+                            MOTOR_UPPER[i].update(MOTOR_Phi[i]*10)
+                        elif rob.UPPER_PID_TYPE[i] == "ANG":
+                            MOTOR_UPPER[i].update(MOTOR_Angle[i])
+                        elif rob.UPPER_PID_TYPE[i] == "FEED":
+                            MOTOR_UPPER[i].update(MOTOR_Total[i])
 
-                        MOTOR_TORQUE[i].SetPoint = MOTOR_SPEED[i].output
+                        if not SKIP_UPPER:
+                            MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
                         phi_count[i] = 0
                     else:
                         phi_count[i] = phi_count[i] + 1
 
-                    
+                    motor_out[i] = MOTOR_UPPER[i].output
 
-                    if i in range(4,6):
-                        MOTOR_TORQUE[i].update(MOTOR_Phi[i]*10)
+                    if rob.LOWER_PID_TYPE[i] == "SPD":
+                        MOTOR_LOWER[i].update(MOTOR_Phi[i]*10)
+                    elif rob.LOWER_PID_TYPE[i] == "TRQ":
+                        # MOTOR_LOWER[i].update(torque)
+                        pass
 
-                    motor_out[i] = MOTOR_TORQUE[i].output
+                    # motor_out[i] = MOTOR_LOWER[i].output
 
-                    # if i in range(4,6):
-                    #     motor_out[i] = MOTOR_SPEED[i].output
+                    if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_LOWER_LIMIT[i]:
+                        motor_out[i] = -MOTOR_LOWER_LIMIT[i]
 
-                    if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_TORQUE_LIMIT[i]:
-                        motor_out[i] = -MOTOR_TORQUE_LIMIT[i]
-
-                    if motor_out[i] > MOTOR_TORQUE_LIMIT[i]:
-                        motor_out[i] = MOTOR_TORQUE_LIMIT[i] - 1
+                    if motor_out[i] > MOTOR_LOWER_LIMIT[i]:
+                        motor_out[i] = MOTOR_LOWER_LIMIT[i] - 1
 
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
@@ -345,8 +363,8 @@ def CAN_RCV_LOOP():
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%04.2f] " % (abs(MOTOR_Phi[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_SPEED[i].output) + ("%04d] " % (abs(MOTOR_SPEED[i].output)))
-                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_TORQUE[i].output) + ("%04d] " % (abs(MOTOR_TORQUE[i].output)))
+                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
+                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
                         prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
                         prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
@@ -356,9 +374,9 @@ def CAN_RCV_LOOP():
                         printing = printing + prt_angle
                     if PRINT_Motor_Speed:
                         printing = printing + prt_spd
-                    if PRINT_Speed_Output:
+                    if PRINT_Upper_Output:
                         printing = printing + prt_spd_out
-                    if PRINT_Torque_Output:
+                    if PRINT_Lower_Output:
                         printing = printing + prt_trq_out
                     if PRINT_Control_Signal:
                         printing = printing + prt_control_signal

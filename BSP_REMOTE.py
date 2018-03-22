@@ -16,8 +16,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
+import BSP_ROBOT_CONFIG as ROB
 
 style.use("ggplot")
+
+rob = ROB.robot()
 
 payloadM = {}
 payloadP = {}
@@ -25,13 +28,12 @@ onMotor = False
 onPID = False
 
 
-motor_num = 8
+rob.mono = 8
 client = mqtt.Client()
 motor_directions = (1,1,1,1)
 motor_labels = []
 pid_labels = [[],[],[]]
 pid_entrys = [[],[],[]]
-pid_titles = ["Chassis_Speed", "Chassis_Torque","Yaw_Speed","Yaw_Torque","Pitch_Speed","Pitch_Torque","Feeding_Speed","Feeding_Torque"]
 XList = range(100,0,-1)
 YListS = [0] * 100
 YListA = [0] * 100
@@ -39,7 +41,7 @@ YListT = [0] * 100
 
 init = [[],[],[]]
 for i in range(3):
-    for j in range(len(pid_titles)):
+    for j in range(len(rob.PID_Items)):
         init[i].append(True)
 
 warning_labels = []
@@ -47,7 +49,7 @@ warning_labels = []
 PID_feedback = [[],[],[]]
 PID_set = [[],[],[]]
 for i in range(3):
-    for j in range(len(pid_titles)):
+    for j in range(len(rob.PID_Items)):
         PID_feedback[i].append(0.0)
         PID_set[i].append(0.0)
     
@@ -69,7 +71,7 @@ TorqueList = []
 UpdatingGraph = True
 
 
-for i in range(motor_num):
+for i in range(rob.mono):
     SpeedList.append([0] * 100)
     AngleList.append([0] * 100)
     TorqueList.append([0] * 100)
@@ -90,7 +92,7 @@ class DataHolder(object):
 
 
     def __init__(self):
-        for i in range(motor_num):
+        for i in range(rob.mono):
             self.motorSpeeds.append(000000)
             self.motorAngles.append(000.00)
             self.motorTorques.append(000000)
@@ -102,20 +104,20 @@ data = DataHolder()
 
         
 def updateMotorToGUI(): 
-    for i in range(motor_num):
+    for i in range(rob.mono):
         prt = "%06d " % (data.motorSpeeds[i])
         motor_labels[i].config(text=prt)
-    for i in range(motor_num,motor_num*2):
-        prt = "%06d " % (data.motorTorques[i-motor_num])
+    for i in range(rob.mono,rob.mono*2):
+        prt = "%06d " % (data.motorTorques[i-rob.mono])
         motor_labels[i].config(text=prt)
-    for i in range(motor_num*2,motor_num*3):
-        prt = "%06.2f " % (data.motorAngles[i-motor_num*2])
+    for i in range(rob.mono*2,rob.mono*3):
+        prt = "%06.2f " % (data.motorAngles[i-rob.mono*2])
         motor_labels[i].config(text=prt)
-    for i in range(motor_num*3,motor_num*3+3):
-        prt = "%06d " % (data.gyro[i-motor_num*3])
+    for i in range(rob.mono*3,rob.mono*3+3):
+        prt = "%06d " % (data.gyro[i-rob.mono*3])
         motor_labels[i].config(text=prt)
-    for i in range(motor_num*3+3,motor_num*3+6):
-        prt = "%06d " % (data.acce[i-(motor_num*3+3)])
+    for i in range(rob.mono*3+3,rob.mono*3+6):
+        prt = "%06d " % (data.acce[i-(rob.mono*3+3)])
         motor_labels[i].config(text=prt)
     
 
@@ -258,7 +260,7 @@ def clearGraph():
     AngleList.clear()
     TorqueList.clear()
 
-    for i in range(motor_num):
+    for i in range(rob.mono):
         SpeedList.append([0] * 100)
         AngleList.append([0] * 100)
         TorqueList.append([0] * 100)
@@ -275,7 +277,7 @@ def freezeGraph(bott):
 
 def updatePID():
     for i in range(3):
-        for j in range(len(pid_titles)):
+        for j in range(len(rob.PID_Items)):
             print(str(i)+str(j))
             pid_fig = pid_entrys[i][j].get()
             if not pid_fig == "":
@@ -319,14 +321,14 @@ def main():
     motors_frame = ttk.Labelframe(monitor_frame, padding=10, text='Motors')
     
     motor_num_frame = ttk.Frame(motors_frame)
-    for i in range(motor_num):  
+    for i in range(rob.mono):  
         motor_label = ttk.Label(motor_num_frame, text='Motor'+str(i)+'    |    ')
         motor_label.grid(row=i,column=0)
         
     motor_num_frame.grid(row=0,column=0)
     
     speed_frame = ttk.Frame(motors_frame)    
-    for i in range(motor_num):   
+    for i in range(rob.mono):   
         speed_title = ttk.Label(speed_frame, text='Speed: ')
         speed_title.grid(row=i,column=0)
         
@@ -337,7 +339,7 @@ def main():
     speed_frame.grid(row=0,column=1)
     
     torque_frame = ttk.Frame(motors_frame)    
-    for i in range(motor_num):
+    for i in range(rob.mono):
         torque_title = ttk.Label(torque_frame, text='Torque: ')
         torque_title.grid(row=i,column=0)
         
@@ -348,7 +350,7 @@ def main():
     torque_frame.grid(row=0,column=2)
     
     angle_frame = ttk.Frame(motors_frame) 
-    for i in range(motor_num):
+    for i in range(rob.mono):
         angle_title = ttk.Label(angle_frame, text='Angle: ')
         angle_title.grid(row=i,column=0)
         
@@ -446,7 +448,7 @@ def main():
 
     motor_radios = []
     motor_radio_observer = tkinter.IntVar()
-    for i in range(motor_num):
+    for i in range(rob.mono):
         motor_radios.append(ttk.Radiobutton(motor_radio_frame, text=('m'+str(i)), value=i))
         motor_radios[i]['variable'] = motor_radio_observer
         motor_radios[i]['command'] = lambda: motor_slection(motor_radio_observer)
@@ -476,8 +478,8 @@ def main():
 
     p_i_d = ["P:","I:","D:"]
 
-    for i in range(len(pid_titles)):
-        pid_frame = ttk.Labelframe(PID_frame,padding=1,text=pid_titles[i])
+    for i in range(len(rob.PID_Items)):
+        pid_frame = ttk.Labelframe(PID_frame,padding=1,text=rob.PID_Items[i])
         for j in range(3):
             p_i_d_frame = ttk.Labelframe(pid_frame,padding=1,text=p_i_d[j])
             p_i_d_label = ttk.Label(p_i_d_frame,text="000")
