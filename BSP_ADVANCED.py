@@ -1,6 +1,8 @@
 import json, time, threading, math
-import BSP_PID as PID
+import BSP_ERROR, BSP_PID as PID
 import BSP_ROBOT_CONFIG as ROB
+import copy
+import paho.mqtt.client as mqtt
 
 rob = ROB.robot()
 rob.mono = 7
@@ -64,7 +66,7 @@ def on_message(client, userdata, msg):
         PIDs[1].SetPoint = payload["YSet"]
         PIDs[2].SetPoint = payload["PhiSet"]
 
-    elif msg.topic = "/GIMBAL_SET/":
+    elif msg.topic == "/GIMBAL_SET/":
         if payload["Type"] == "Angle":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Upper"
@@ -74,7 +76,7 @@ def on_message(client, userdata, msg):
         CONFIG_SET[4] = payload["YawSet"]
         CONFIG_SET[5] = payload["PitchSet"]
 
-    elif msg.topic = "/CHASSIS_STATUS/":
+    elif msg.topic == "/CHASSIS_STATUS/":
         PIDs[0].update(payload["XSpeed"])
         PIDs[1].update(payload["YSpeed"])
         PIDs[2].update(payload["PhiSpeed"])
