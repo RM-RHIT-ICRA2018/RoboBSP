@@ -84,7 +84,7 @@ class DataHolder(object):
     motorTorques = []
     gyro = [0.0,0.0,0.0] #[x,y,z]
     acce = [0.0,0.0,0.0] #[x,y,z]
-    controlKeys = [0,0,0,0,0,0] #[w,a,s,d,q,e]
+    controlKeys = [0,0,0,0,0,0,0,0,0,0] #[w,a,s,d,q,e,up,down,left,right]
     key_press = 0
     graph_motor = 0
 
@@ -212,8 +212,10 @@ def sentControlMsg():
     x = keys[0] - keys[2]
     y = keys[3] - keys[1]
     phi = keys[5] - keys[4]
-    print('x: ' + str(x) + ' y: ' + str(y) + ' phi: ' +str(phi) )
-    client.publish("/REMOTE/", json.dumps({"XSpeed": x, "YSpeed": y, "PhiSpeed": phi}))
+    pitch = keys[6] - keys[7]
+    yaw = keys[8] - keys[9]
+    print('x: ' + str(x) + ' y: ' + str(y) + ' phi: ' +str(phi) + ' pitch: ' + str(pitch) + ' yaw: ' + str(yaw))
+    client.publish("/REMOTE/", json.dumps({"XSpeed": x, "YSpeed": y, "PhiSpeed": phi, "Pitch":pitch, "Yaw": yaw}))
     
 def control_key_pressed(keyNo):
     if data.input_enabled and data.controlKeys[keyNo] == 0:
@@ -504,6 +506,10 @@ def main():
     root.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
     root.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
     root.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
+    root.bind_all('<KeyPress-up>', lambda event: control_key_pressed(6))    
+    root.bind_all('<KeyPress-down>', lambda event: control_key_pressed(7))
+    root.bind_all('<KeyPress-left>', lambda event: control_key_pressed(8))
+    root.bind_all('<KeyPress-right>', lambda event: control_key_pressed(9))
     
     root.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
     root.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
@@ -511,6 +517,10 @@ def main():
     root.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
     root.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
     root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
+    root.bind_all('<KeyRelease-up>', lambda event: control_key_release(6))    
+    root.bind_all('<KeyRelease-down>', lambda event: control_key_release(7))
+    root.bind_all('<KeyRelease-left>', lambda event: control_key_release(8))
+    root.bind_all('<KeyRelease-right>', lambda event: control_key_release(9))
     
     ani = animation.FuncAnimation(fig, update_graph, interval=100)
     

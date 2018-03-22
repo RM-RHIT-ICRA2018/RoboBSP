@@ -25,6 +25,9 @@ CHASSIS_SPEED_INDEX = 1000
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 mono = 7
 
+Remote_Pitch = 0
+Remote_Yaw = 0
+
 FEEDER_POS_TURN = 2300
 FEEDER_REV_TURN = -600
 
@@ -155,6 +158,8 @@ def on_message(client, userdata, msg):
         Robot_X = payload["XSpeed"]
         Robot_Y = payload["YSpeed"]
         Robot_Phi = payload["PhiSpeed"]
+        Remote_Yaw = payload["Yaw"]
+        Remote_Pitch = payload["Pitch"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
             MOTOR_SPEED[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
@@ -188,8 +193,8 @@ def on_message(client, userdata, msg):
 
 
     if msg.topic == "/REMOTE/EXP":
-        #MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
-        #MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
+        MOTOR_SPEED[4].SetPoint = payload["YawAngle"]
+        MOTOR_SPEED[5].SetPoint = payload["PitchAngle"]
         MOTOR_SPEED[6].SetPoint = MOTOR_SPEED[6].SetPoint + payload["Pos"]
 
 def compare_pid():
