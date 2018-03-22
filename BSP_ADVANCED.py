@@ -59,7 +59,7 @@ def on_message(client, userdata, msg):
         PIDs[1].SetPoint = payload["YSpeed"]
         PIDs[2].SetPoint = payload["PhiSpeed"]
 
-    elif msg.topic = "/CHASSIS_SET/":
+    elif msg.topic == "/CHASSIS_SET/":
         PIDs[0].SetPoint = payload["XSet"]
         PIDs[1].SetPoint = payload["YSet"]
         PIDs[2].SetPoint = payload["PhiSet"]
