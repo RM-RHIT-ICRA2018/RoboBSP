@@ -6,12 +6,12 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
-PRINT_MOTOR_INFO = TRUE
+PRINT_MOTOR_INFO = True
 PRINT_ROLLING = False
-PRINT_RANGE = [6]
+PRINT_RANGE = [4,5]
 
 PRINT_Motor_Angle = True
-PRINT_Motor_Speed = False
+PRINT_Motor_Speed = True
 PRINT_Upper_Output = True
 PRINT_Lower_Output = True
 PRINT_Control_Signal = False
@@ -375,7 +375,7 @@ def CAN_RCV_LOOP():
                     prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
-                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_Phi[i]*100) + ("%04.2f] " % (abs(MOTOR_Phi[i]*100)))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]*100) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]*100)))
                         prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
                         prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
