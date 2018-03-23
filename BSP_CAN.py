@@ -6,9 +6,9 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
-PRINT_MOTOR_INFO = True
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
-PRINT_RANGE = [4,5]
+PRINT_RANGE = [4]
 
 PRINT_Motor_Angle = True
 PRINT_Motor_Speed = True
@@ -317,11 +317,13 @@ def CAN_RCV_LOOP():
 
                         MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
+                        print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
+
+
                         MOTOR_TIMER[i] = TIME_NOW
                         MOTOR_Angle[i] = MOTOR_Now[i]
                         MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
 
-                        # print(str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
                             MOTOR_UPPER[i].update(MOTOR_OMEGA[i]*10)
@@ -367,8 +369,8 @@ def CAN_RCV_LOOP():
 
                     prt_angle = " Ang: "
                     prt_spd = " Spd: "
-                    prt_spd_out = " Spd.out: "
-                    prt_trq_out = " Trq.out: "
+                    prt_up_out = " Up.out: "
+                    prt_low_out = " Low.out: "
                     prt_control_signal = " Ctrl: "
                     prt_angle_msg = " Ang-Msg: "
                     prt_spd_msg = " Spd-Msg: "
@@ -376,8 +378,8 @@ def CAN_RCV_LOOP():
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]*100) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]*100)))
-                        prt_spd_out = prt_spd_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
-                        prt_trq_out = prt_trq_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
+                        prt_up_out = prt_up_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
+                        prt_low_out = prt_low_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
                         prt_angle_msg = prt_angle_msg + str(i) + "[" + get_sign(MOTOR_ANGLE_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_ANGLE_MSG_OUT[i])))
                         prt_spd_msg = prt_spd_msg + str(i) + "[" + get_sign(MOTOR_SPEED_MSG_OUT[i]) + ("%04.2f] " % (abs(MOTOR_SPEED_MSG_OUT[i])))
@@ -388,9 +390,9 @@ def CAN_RCV_LOOP():
                     if PRINT_Motor_Speed:
                         printing = printing + prt_spd
                     if PRINT_Upper_Output:
-                        printing = printing + prt_spd_out
+                        printing = printing + prt_up_out
                     if PRINT_Lower_Output:
-                        printing = printing + prt_trq_out
+                        printing = printing + prt_low_out
                     if PRINT_Control_Signal:
                         printing = printing + prt_control_signal
                     if PRINT_Angle_Massage:
