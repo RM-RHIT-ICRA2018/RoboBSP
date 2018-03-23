@@ -51,10 +51,10 @@ PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Upper
 PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Lower
 
 PID_SETTINGS_SET.append({"P":-60.0 ,"I":-20.0, "D":-10.0})      #Yaw_Upper
-PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Yaw_Lower
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Yaw_Lower
 
 PID_SETTINGS_SET.append({"P":-65.0 ,"I":-8.0 ,"D":-12.0})       #Pitch_Upper
-PID_SETTINGS_SET.append({"P":0.2 ,"I":0.0, "D":0.0})            #Pitch_Lower
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Pitch_Lower
 
 PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Upper
 PID_SETTINGS_SET.append({"P":0.5 ,"I":0.0, "D":0.0})            #Feeding_Lower
@@ -318,14 +318,20 @@ def CAN_RCV_LOOP():
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
                         MOTOR_Angle[i] = MOTOR_Now[i]
                         MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
-                        print(str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
+                        # print(str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
-                            MOTOR_UPPER[i].update(MOTOR_Phi[i]*10)
+                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]/250)
                         elif rob.UPPER_PID_TYPE[i] == "ANG":
                             MOTOR_UPPER[i].update(MOTOR_Angle[i])
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
+
+                        if rob.LOWER_PID_TYPE[i] == "SPD":
+                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/250)
+                        elif rob.LOWER_PID_TYPE[i] == "TRQ":
+                            # MOTOR_LOWER[i].update(torque)
+                            pass
 
                         if not SKIP_UPPER:
                             MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
@@ -333,15 +339,11 @@ def CAN_RCV_LOOP():
                     else:
                         phi_count[i] = phi_count[i] + 1
 
-                    motor_out[i] = MOTOR_UPPER[i].output
+                    # motor_out[i] = MOTOR_UPPER[i].output
 
-                    if rob.LOWER_PID_TYPE[i] == "SPD":
-                        MOTOR_LOWER[i].update(MOTOR_Phi[i]*10)
-                    elif rob.LOWER_PID_TYPE[i] == "TRQ":
-                        # MOTOR_LOWER[i].update(torque)
-                        pass
+                    
 
-                    # motor_out[i] = MOTOR_LOWER[i].output
+                    motor_out[i] = MOTOR_LOWER[i].output
 
                     if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_LOWER_LIMIT[i]:
                         motor_out[i] = -MOTOR_LOWER_LIMIT[i]
