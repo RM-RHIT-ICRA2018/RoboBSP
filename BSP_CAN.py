@@ -6,7 +6,7 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
-PRINT_MOTOR_INFO = False
+PRINT_MOTOR_INFO = TRUE
 PRINT_ROLLING = False
 PRINT_RANGE = [6]
 
@@ -261,7 +261,7 @@ def CAN_RCV_LOOP():
     MOTOR_OMEGA = []
 
     for i in range(7):
-        MOTOR_TIMER.append(time.clock())
+        MOTOR_TIMER.append(time.time())
         MOTOR_Angle.append(0.0)
         MOTOR_Phi.append(0.0)
         MOTOR_Now.append(0.0)
@@ -300,7 +300,7 @@ def CAN_RCV_LOOP():
             speed = data[2]*256+data[3]
             if speed >= 2**15:
                 speed = speed-2**16
-            TIME_NOW = time.clock()
+            TIME_NOW = time.time()
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
@@ -310,25 +310,28 @@ def CAN_RCV_LOOP():
                             MOTOR_Angle[i] = MOTOR_Now[i]
                             init[i] = False
                         MOTOR_Phi[i] = MOTOR_Now[i] - MOTOR_Angle[i]
-                        MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
-                        MOTOR_TIMER[i] = TIME_NOW
                         if MOTOR_Phi[i] > 180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] - 360
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
+
+                        MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
+
+                        MOTOR_TIMER[i] = TIME_NOW
                         MOTOR_Angle[i] = MOTOR_Now[i]
                         MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
+
                         # print(str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
-                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]/250)
+                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]*10)
                         elif rob.UPPER_PID_TYPE[i] == "ANG":
                             MOTOR_UPPER[i].update(MOTOR_Angle[i])
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
-                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/250)
+                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]*10)
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
                             # MOTOR_LOWER[i].update(torque)
                             pass
