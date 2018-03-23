@@ -261,7 +261,7 @@ def CAN_RCV_LOOP():
     MOTOR_OMEGA = []
 
     for i in range(7):
-        MOTOR_TIMER.append(time.clock)
+        MOTOR_TIMER.append(time.clock())
         MOTOR_Angle.append(0.0)
         MOTOR_Phi.append(0.0)
         MOTOR_Now.append(0.0)
@@ -300,7 +300,7 @@ def CAN_RCV_LOOP():
             speed = data[2]*256+data[3]
             if speed >= 2**15:
                 speed = speed-2**16
-            TIME_NOW = time.clock
+            TIME_NOW = time.clock()
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
