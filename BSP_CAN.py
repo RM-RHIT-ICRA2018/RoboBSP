@@ -50,10 +50,10 @@ PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Upper
 PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Lower
 
-PID_SETTINGS_SET.append({"P":-60.0 ,"I":-20.0, "D":-10.0})      #Yaw_Upper
+PID_SETTINGS_SET.append({"P":-60.0 ,"I":0.0, "D":0.0})      #Yaw_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Yaw_Lower
 
-PID_SETTINGS_SET.append({"P":-65.0 ,"I":-8.0 ,"D":-12.0})       #Pitch_Upper
+PID_SETTINGS_SET.append({"P":-65.0 ,"I":0.0 ,"D":0.0})       #Pitch_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Pitch_Lower
 
 PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Upper
@@ -81,7 +81,7 @@ SKIP_UPPER = []
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"]))
     MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
-    MOTOR_UPPER[i].setSampleTime(0.01)
+    MOTOR_UPPER[i].setSampleTime(0.0001)
     SKIP_UPPER.append(False)
 
 

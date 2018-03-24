@@ -37,7 +37,7 @@ PID_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0]
 for i in range(PID_NUM):
     PIDs.append(PID.PID(PID_SETTINGS_REAL[i]["P"], PID_SETTINGS_REAL[i]["I"], PID_SETTINGS_REAL[i]["D"]))
     PIDs[i].SetPoint=PID_SetPoints[i]
-    PIDs[i].setSampleTime(0.01)
+    PIDs[i].setSampleTime(0.0001)
 
 def update_PID():
     for i in range(PID_NUM):

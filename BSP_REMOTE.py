@@ -299,6 +299,8 @@ def updatePID():
     publishPID()
 
 def set_gimbal(yaw_entry,pitch_entry):
+    global YAW_SET
+    global PITCH_SET
     YAW_SET = int(yaw_entry.get())
     PITCH_SET = int(pitch_entry.get())
     publishControl()
@@ -319,16 +321,16 @@ def main():
     
     #MQTT setup
     
-    # client.on_connect = on_connect
-    # client.on_message = on_message
+    client.on_connect = on_connect
+    client.on_message = on_message
     
-    # HOST = "192.168.1.2"
+    HOST = "192.168.1.2"
 
-    # print("MQTT client connecting to host ["+HOST+"]")
+    print("MQTT client connecting to host ["+HOST+"]")
     
-    # client.connect(HOST, 1883, 60)
+    client.connect(HOST, 1883, 60)
     
-    # client.loop_start()
+    client.loop_start()
     
     # GUI setup
 
@@ -570,7 +572,7 @@ def main():
     root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
-    # ani = animation.FuncAnimation(fig, update_graph, interval=100)
+    ani = animation.FuncAnimation(fig, update_graph, interval=100)
     
     Msg_thread = MsgThread()
     Msg_thread.start()
