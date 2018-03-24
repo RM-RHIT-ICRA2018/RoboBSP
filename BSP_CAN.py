@@ -317,7 +317,8 @@ def CAN_RCV_LOOP():
 
                         MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
-                        print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
+                        if i in range(4,5):
+                            print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
 
 
                         MOTOR_TIMER[i] = TIME_NOW
