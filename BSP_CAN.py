@@ -304,7 +304,7 @@ def CAN_RCV_LOOP():
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if phi_count[i] > 10: #reduce the speed of phi
+                    if 1:#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Now[i] = (360.0)/(8191.0)*float(data[0]*256+data[1])
                         if init[i]:
                             MOTOR_Angle[i] = MOTOR_Now[i]
@@ -333,14 +333,16 @@ def CAN_RCV_LOOP():
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
 
+                        if 1:#not SKIP_UPPER:
+                            MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
+
                         if rob.LOWER_PID_TYPE[i] == "SPD":
                             MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
                             # MOTOR_LOWER[i].update(torque)
                             pass
 
-                        if not SKIP_UPPER:
-                            MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
+                        
                         phi_count[i] = 0
                     else:
                         phi_count[i] = phi_count[i] + 1
