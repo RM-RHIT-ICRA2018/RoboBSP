@@ -39,6 +39,16 @@ YListS = [0] * 100
 YListA = [0] * 100
 YListT = [0] * 100
 
+YAW_SET = 174
+PITCH_SET = 174
+CHASSIS_X = 0
+CHASSIS_Y = 0
+CHASSIS_PHI = 0
+YAW_MOVE = 0
+PITCH_MOVE = 0
+
+
+
 init = [[],[],[]]
 for i in range(3):
     for j in range(len(rob.PID_Items)):
@@ -206,30 +216,32 @@ def publishPID():
     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
 
 
+def publishControl():
+    client.publish("/REMOTE/", json.dumps({"XSpeed": CHASSIS_X, "YSpeed": CHASSIS_Y, "PhiSpeed": CHASSIS_PHI, "Pitch":PITCH_MOVE, "Yaw": YAW_MOVE, "YawAngle": YAW_SET, "PitchAngle": PITCH_SET}))
 
     
     
-def sentControlMsg():
+def updateKeyChassisControl():
     keys = data.controlKeys
-    x = keys[0] - keys[2]
-    y = keys[3] - keys[1]
-    phi = keys[5] - keys[4]
-    pitch = keys[6] - keys[7]
-    yaw = keys[8] - keys[9]
-    print('x: ' + str(x) + ' y: ' + str(y) + ' phi: ' +str(phi) + ' pitch: ' + str(pitch) + ' yaw: ' + str(yaw))
-    client.publish("/REMOTE/", json.dumps({"XSpeed": x, "YSpeed": y, "PhiSpeed": phi, "Pitch":pitch, "Yaw": yaw}))
+    CHASSIS_X = keys[0] - keys[2]
+    CHASSIS_Y = keys[3] - keys[1]
+    CHASSIS_PHI = keys[5] - keys[4]
+    PITCH_MOVE = keys[6] - keys[7]
+    YAW_MOVE = keys[8] - keys[9]
+    print('x: ' + str(CHASSIS_X) + ' y: ' + str(CHASSIS_Y) + ' phi: ' +str(CHASSIS_PHI) + ' pitch: ' + str(PITCH_MOVE) + ' yaw: ' + str(YAW_MOVE))
+    publishControl()
     
 def control_key_pressed(keyNo):
     if data.input_enabled and data.controlKeys[keyNo] == 0:
         print(str(keyNo)+' Pressed')
         data.controlKeys[keyNo] = 1
-        sentControlMsg()
+        updateKeyChassisControl()
         
 def control_key_released(keyNo):
     if data.input_enabled and data.controlKeys[keyNo] == 1:
         print(str(keyNo)+' Released')
         data.controlKeys[keyNo] = 0
-        sentControlMsg()
+        updateKeyChassisControl()
         
 def enable_control():
     data.input_enabled = not data.input_enabled
@@ -286,6 +298,12 @@ def updatePID():
                 PID_set[i][j] = float(pid_fig)
     publishPID()
 
+def set_gimbal(yaw_entry,pitch_entry):
+    YAW_SET = int(yaw_entry.get())
+    PITCH_SET = int(pitch_entry.get())
+    publishControl()
+
+
 
 class MsgThread(threading.Thread):
     def __init__(self):
@@ -301,22 +319,24 @@ def main():
     
     #MQTT setup
     
-    client.on_connect = on_connect
-    client.on_message = on_message
+    # client.on_connect = on_connect
+    # client.on_message = on_message
     
-    HOST = "192.168.1.2"
+    # HOST = "192.168.1.2"
 
-    print("MQTT client connecting to host ["+HOST+"]")
+    # print("MQTT client connecting to host ["+HOST+"]")
     
-    client.connect(HOST, 1883, 60)
+    # client.connect(HOST, 1883, 60)
     
-    client.loop_start()
+    # client.loop_start()
     
     # GUI setup
 
     root = tkinter.Tk()
+
+    left_frame = ttk.Frame(root, padding = 5)
     
-    monitor_frame = ttk.Labelframe(root, padding=10, text='Status Monitor')
+    monitor_frame = ttk.Labelframe(left_frame, padding=10, text='Status Monitor')
     
     motors_frame = ttk.Labelframe(monitor_frame, padding=10, text='Motors')
     
@@ -424,15 +444,41 @@ def main():
     
     gyro_acce_frame.grid(row=1)
 
-    enable_control_check = ttk.Checkbutton(monitor_frame, text='Enable Keyboard Control')
+    
+    
+    monitor_frame.grid(column=0,row=0)
+
+    control_frame = ttk.Labelframe(left_frame, padding=10, text='Control')
+
+    enable_control_check = ttk.Checkbutton(control_frame, text='Enable Keyboard Control')
     
     enable_control_check_observer = tkinter.StringVar()
     enable_control_check['variable'] = enable_control_check_observer
     enable_control_check['command'] = lambda: enable_control()
     
-    enable_control_check.grid(row=3)
-    
-    monitor_frame.grid(column=0,row=0)
+    enable_control_check.grid(row=0)
+
+    gimbal_control_frame = ttk.Labelframe(control_frame, padding=5,text='Gimbal Angle Setting')
+
+    gimbal_entry_frame = ttk.Frame(gimbal_control_frame, padding=5)
+
+    yaw_entry = ttk.Entry(gimbal_entry_frame,width=20)
+    yaw_entry.grid(column=0,row=0)
+
+    pitch_entry = ttk.Entry(gimbal_entry_frame,width=20)
+    pitch_entry.grid(column=1,row=0)
+
+    gimbal_entry_frame.grid()
+
+    gimbal_set_button = ttk.Button(gimbal_control_frame, width=20, text='Set Gimbal Angle')
+    gimbal_set_button['command'] = lambda: set_gimbal(yaw_entry,pitch_entry)
+    gimbal_set_button.grid()
+
+    gimbal_control_frame.grid(row=1)
+
+    control_frame.grid(column=0,row=1)
+
+    left_frame.grid(column=0,row=0)
 
     graph_frame = ttk.Labelframe(root, padding=10, text="Real-time Graphics")
 
@@ -524,7 +570,7 @@ def main():
     root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
-    ani = animation.FuncAnimation(fig, update_graph, interval=100)
+    # ani = animation.FuncAnimation(fig, update_graph, interval=100)
     
     Msg_thread = MsgThread()
     Msg_thread.start()

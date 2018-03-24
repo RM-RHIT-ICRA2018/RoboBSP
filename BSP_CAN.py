@@ -164,6 +164,10 @@ def on_message(client, userdata, msg):
         Robot_Phi = payload["PhiSpeed"]
         Remote_Yaw = payload["Yaw"]
         Remote_Pitch = payload["Pitch"]
+        
+        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
+        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
+        # MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
