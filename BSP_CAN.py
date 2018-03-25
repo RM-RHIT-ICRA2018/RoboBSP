@@ -88,9 +88,9 @@ for i in range(rob.mono):
 
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-MOTOR_LOWER_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
+MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
 
-for i in MOTOR_LOWER_LIMIT:
+for i in MOTOR_OUT_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
 
 for i in range(rob.mono):
@@ -270,6 +270,8 @@ def CAN_RCV_LOOP():
     MOTOR_TIMER = []
     MOTOR_OMEGA = []
     MOTOR_Torque = []
+    UPPER_OUT = []
+    LOWER_OUT = []
 
     for i in range(7):
         MOTOR_TIMER.append(time.time())
@@ -285,6 +287,8 @@ def CAN_RCV_LOOP():
         MOTOR_TORQUE_MSG_OUT.append(0.0)
         MOTOR_OMEGA.append(0.0)
         MOTOR_Torque.append(0.0)
+        UPPER_OUT.append(0.0)
+        LOWER_OUT.append(0.0)
 
     mqtt_count = 0
     phi_count = [0,0,0,0,0,0,0]
@@ -348,6 +352,7 @@ def CAN_RCV_LOOP():
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
 
                         if 1:#not SKIP_UPPER:
+                            UPPER_OUT[i] = MOTOR_UPPER[i].output
                             MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
@@ -362,15 +367,26 @@ def CAN_RCV_LOOP():
                         phi_count[i] = phi_count[i] + 1
 
                     if SKIP_LOWER[i]:
+                        UPPER_OUT[i] = MOTOR_UPPER[i].output
                         motor_out[i] = MOTOR_UPPER[i].output
+                        if UPPER_OUT[i] > MOTOR_OUT_LIMIT[i]:
+                            UPPER_OUT[i] = MOTOR_OUT_LIMIT[i]
+                        elif UPPER_OUT[i] < -MOTOR_OUT_LIMIT[i]:
+                            UPPER_OUT[i] = -MOTOR_OUT_LIMIT[i]
+
                     else:
+                        LOWER_OUT[i] = MOTOR_LOWER[i].output
                         motor_out[i] = MOTOR_LOWER[i].output
+                        if LOWER_OUT[i] > MOTOR_OUT_LIMIT[i]:
+                            LOWER_OUT[i] = MOTOR_OUT_LIMIT[i]
+                        elif LOWER_OUT[i] < -MOTOR_OUT_LIMIT[i]:
+                            LOWER_OUT[i] = -MOTOR_OUT_LIMIT[i]
 
-                    if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_LOWER_LIMIT[i]:
-                        motor_out[i] = -MOTOR_LOWER_LIMIT[i]
+                    if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_OUT_LIMIT[i]:
+                        motor_out[i] = -MOTOR_OUT_LIMIT[i]
 
-                    if motor_out[i] > MOTOR_LOWER_LIMIT[i]:
-                        motor_out[i] = MOTOR_LOWER_LIMIT[i] - 1
+                    if motor_out[i] > MOTOR_OUT_LIMIT[i]:
+                        motor_out[i] = MOTOR_OUT_LIMIT[i] - 1
 
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
@@ -445,7 +461,7 @@ def CAN_RCV_LOOP():
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
                 sock.send(can_pkt)
                 if  mqtt_count > 25:
-                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_OMEGA, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
+                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_OMEGA, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES, "Upper": UPPER_OUT, "Lower": LOWER_OUT}
                     #print(BSP_ERROR.info(msg_content))
                     client.publish("/MOTOR/", json.dumps(msg_content))
                     publish_real_pid()

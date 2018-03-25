@@ -38,6 +38,8 @@ XList = range(100,0,-1)
 YListS = [0] * 100
 YListA = [0] * 100
 YListT = [0] * 100
+YListU = [0] * 100
+YListL = [0] * 100
 
 YAW_SET = 174
 PITCH_SET = 174
@@ -64,19 +66,25 @@ for i in range(3):
         PID_set[i].append(0.0)
     
 
-fig = Figure(figsize=(10,5), dpi=100)
-ani_spd = fig.add_subplot(3,1,1)
+fig = Figure(figsize=(10,10), dpi=100)
+ani_spd = fig.add_subplot(5,1,1)
 ani_spd.set_title("Speed")
-ani_ang = fig.add_subplot(3,1,2)
+ani_ang = fig.add_subplot(5,1,2)
 ani_ang.set_title("Angle")
-ani_trq = fig.add_subplot(3,1,3)
+ani_trq = fig.add_subplot(5,1,3)
 ani_trq.set_title("Torque")
+ani_up = fig.add_subplot(5,1,4)
+ani_up.set_title("Upper")
+ani_low = fig.add_subplot(5,1,5)
+ani_low.set_title("Lower")
 
 
 
 SpeedList = []
 AngleList = []
 TorqueList = []
+UpperList = []
+LowerList = []
 
 UpdatingGraph = True
 
@@ -85,6 +93,8 @@ for i in range(rob.mono):
     SpeedList.append([0] * 100)
     AngleList.append([0] * 100)
     TorqueList.append([0] * 100)
+    UpperList.append([0] * 100)
+    LowerList.append([0] * 100)
 
 
 
@@ -162,6 +172,8 @@ def massageProcess():
         speedIn = payloadM.get("Speed")
         angleIn = payloadM.get("Angle")
         torqueIn = payloadM.get("Torque")
+        upperIn = payloadM.get("Upper")
+        lowerIn = payloadM.get("Lower")
         for i in motorID:
             data.set('motorSpeeds', i, speedIn[i])
             data.set('motorAngles', i, angleIn[i])
@@ -173,6 +185,10 @@ def massageProcess():
                 AngleList[i].append(angleIn[i])
                 TorqueList[i].remove(TorqueList[i][0])
                 TorqueList[i].append(torqueIn[i])
+                UpperList[i].remove(UpperList[i][0])
+                UpperList[i].append(upperIn[i])
+                LowerList[i].remove(LowerList[i][0])
+                LowerList[i].append(lowerIn[i])
 
         updateMotorToGUI()
         onMotor = False
@@ -255,6 +271,8 @@ def update_graph(i):
         ani_ang.clear()
         ani_spd.clear()
         ani_trq.clear()
+        ani_up.clear()
+        ani_low.clear()
         #print(""+str(SpeedList[5][99]))
 
         YListS = SpeedList[data.graph_motor]
@@ -263,6 +281,10 @@ def update_graph(i):
         ani_ang.plot(XList,YListA)
         YListT = TorqueList[data.graph_motor]
         ani_trq.plot(XList,YListT)
+        YListU = UpperList[data.graph_motor]
+        ani_up.plot(XList,YListU)
+        YListL = LowerList[data.graph_motor]
+        ani_low.plot(XList,YListL)
 
         ani_spd.set_title("Speed")
         ani_ang.set_title("Angle")
@@ -275,12 +297,16 @@ def clearGraph():
     SpeedList.clear()
     AngleList.clear()
     TorqueList.clear()
+    UpperList.clear()
+    LowerList.clear()
 
     for i in range(rob.mono):
         SpeedList.append([0] * 100)
         AngleList.append([0] * 100)
         TorqueList.append([0] * 100)
-    print(" "+str(SpeedList[5][99]))
+        UpperList.append([0] * 100)
+        LowerList.append([0] * 100)
+    # print(" "+str(SpeedList[5][99]))
 
 def freezeGraph(bott):
     global UpdatingGraph
@@ -576,7 +602,7 @@ def main():
     root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
-    ani = animation.FuncAnimation(fig, update_graph, interval=2000)
+    ani = animation.FuncAnimation(fig, update_graph, interval=3000)
     
     Msg_thread = MsgThread()
     Msg_thread.start()
