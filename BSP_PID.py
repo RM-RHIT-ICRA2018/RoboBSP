@@ -80,7 +80,7 @@ class PID:
         delta_error = error - self.last_error
         self.PTerm = self.Kp * error
 
-        if self.range != 0 and error/float(self.range) < 0.003:
+        if self.range != 0 and error/float(self.range) < 0.002:
             self.ITerm = 0
 
         if (delta_time >= self.sample_time):
