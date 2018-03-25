@@ -345,7 +345,7 @@ def CAN_RCV_LOOP():
 
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
-                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]/10)
+                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i])
                         elif rob.UPPER_PID_TYPE[i] == "ANG":
                             MOTOR_UPPER[i].update(MOTOR_Angle[i])
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
@@ -356,7 +356,7 @@ def CAN_RCV_LOOP():
                             MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
-                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
+                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i])
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
                             MOTOR_LOWER[i].update(torque)
                             pass

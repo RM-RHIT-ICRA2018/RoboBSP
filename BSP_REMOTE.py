@@ -34,12 +34,12 @@ motor_directions = (1,1,1,1)
 motor_labels = []
 pid_labels = [[],[],[]]
 pid_entrys = [[],[],[]]
-XList = range(100,0,-1)
-YListS = [0] * 100
-YListA = [0] * 100
-YListT = [0] * 100
-YListU = [0] * 100
-YListL = [0] * 100
+XList = range(200,0,-1)
+YListS = [0] * 200
+YListA = [0] * 200
+YListT = [0] * 200
+YListU = [0] * 200
+YListL = [0] * 200
 
 YAW_SET = 174
 PITCH_SET = 174
@@ -90,11 +90,11 @@ UpdatingGraph = True
 
 
 for i in range(rob.mono):
-    SpeedList.append([0] * 100)
-    AngleList.append([0] * 100)
-    TorqueList.append([0] * 100)
-    UpperList.append([0] * 100)
-    LowerList.append([0] * 100)
+    SpeedList.append([0] * 200)
+    AngleList.append([0] * 200)
+    TorqueList.append([0] * 200)
+    UpperList.append([0] * 200)
+    LowerList.append([0] * 200)
 
 
 
@@ -303,11 +303,11 @@ def clearGraph():
     LowerList.clear()
 
     for i in range(rob.mono):
-        SpeedList.append([0] * 100)
-        AngleList.append([0] * 100)
-        TorqueList.append([0] * 100)
-        UpperList.append([0] * 100)
-        LowerList.append([0] * 100)
+        SpeedList.append([0] * 200)
+        AngleList.append([0] * 200)
+        TorqueList.append([0] * 200)
+        UpperList.append([0] * 200)
+        LowerList.append([0] * 200)
     # print(" "+str(SpeedList[5][99]))
 
 def freezeGraph(bott):
