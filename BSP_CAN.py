@@ -329,7 +329,7 @@ def CAN_RCV_LOOP():
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
 
-                        MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
+                        MOTOR_OMEGA[i] = speed #MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
                         # if i in range(4,5):
                             # print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
