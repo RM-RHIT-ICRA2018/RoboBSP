@@ -49,7 +49,7 @@ SERIAL_COMM = []
 
 PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Upper
-PID_SETTINGS_SET.append({"P":0.1 ,"I":0.0, "D":0.0})            #Chassis_Lower
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Chassis_Lower
 
 PID_SETTINGS_SET.append({"P":-60.0 ,"I":0.0, "D":0.0})      #Yaw_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Yaw_Lower
@@ -101,7 +101,7 @@ for i in range(rob.mono):
 
 SKIP_UPPER = [False,False,False,False,False,False,False]
 
-SKIP_LOWER = [True, True, True, True, False, False, False]
+SKIP_LOWER = [False, False, False, False, False, False, False]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))

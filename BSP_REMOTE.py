@@ -222,6 +222,10 @@ def publishControl():
     
     
 def updateKeyChassisControl():
+    global keys
+    global CHASSIS_X
+    global CHASSIS_Y
+    global CHASSIS_PHI
     keys = data.controlKeys
     CHASSIS_X = keys[0] - keys[2]
     CHASSIS_Y = keys[3] - keys[1]
