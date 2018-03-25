@@ -57,7 +57,7 @@ class PID:
 
         # Windup Guard
         self.int_error = 0.0
-        self.windup_guard = 20.0
+        self.windup_guard = 100.0
 
         self.output = 0.0
 
@@ -85,7 +85,7 @@ class PID:
 
         if (delta_time >= self.sample_time):
             
-            self.ITerm += error * delta_time
+            self.ITerm += delta_time
 
             if (self.ITerm < -self.windup_guard):
                 self.ITerm = -self.windup_guard
