@@ -53,6 +53,7 @@ class PID:
         self.PTerm = 0.0
         self.ITerm = 0.0
         self.DTerm = 0.0
+        self.RTerm = 0.0
         self.last_error = 0.0
 
         # Windup Guard
@@ -80,17 +81,18 @@ class PID:
         delta_error = error - self.last_error
         self.PTerm = self.Kp * error
 
-        if self.range != 0 and error/float(self.range) < 0.001:
-            self.ITerm = 0
+        
 
         if (delta_time >= self.sample_time):
             
-            self.ITerm += delta_time
+            self.ITerm += error*delta_time
 
-            if (self.ITerm < -self.windup_guard):
-                self.ITerm = -self.windup_guard
-            elif (self.ITerm > self.windup_guard):
-                self.ITerm = self.windup_guard
+            
+
+            # if (self.ITerm < -self.windup_guard):
+            #     self.ITerm = -self.windup_guard
+            # elif (self.ITerm > self.windup_guard):
+            #     self.ITerm = self.windup_guard
 
             self.DTerm = 0.0
             if delta_time > 0:
@@ -98,9 +100,18 @@ class PID:
 
             # Remember last time and last error for next calculation
             self.last_time = self.current_time
+
+        if error/float(self.range) < 0.001:
+            if self.range != 0:
+                self.ITerm = 0
+            self.RTerm = 0
+        else:
+            self.RTerm = self.ITerm / float(error)
+
+
         self.last_error = error
 
-        self.output = self.PTerm + (self.Ki * self.ITerm) + (self.Kd * self.DTerm)
+        self.output = self.PTerm + (self.Ki * self.RTerm) + (self.Kd * self.DTerm)
 
     def setKp(self, proportional_gain):
         """Determines how aggressively the PID reacts to the current error with setting Proportional Gain"""
