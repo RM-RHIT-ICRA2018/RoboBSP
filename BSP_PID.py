@@ -106,7 +106,7 @@ class PID:
                 self.ITerm = 0
                 self.RTerm = 0
             else:
-                self.RTerm = 1 / (float(error)*self.ITerm)
+                self.RTerm = 1 / (float(error)*(self.ITerm+0.0001))
 
 
         self.last_error = error
