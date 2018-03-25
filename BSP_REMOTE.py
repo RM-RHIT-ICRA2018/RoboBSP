@@ -186,7 +186,7 @@ def massageProcess():
                 TorqueList[i].remove(TorqueList[i][0])
                 TorqueList[i].append(torqueIn[i])
                 UpperList[i].remove(UpperList[i][0])
-                UpperList[i].append(upperIn[i])
+                UpperList[i].append(torqueIn[i])
                 LowerList[i].remove(LowerList[i][0])
                 LowerList[i].append(lowerIn[i])
 
