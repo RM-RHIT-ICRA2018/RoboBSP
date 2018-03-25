@@ -40,6 +40,7 @@ class PID:
         self.Ki = I
         self.Kd = D
         self.range = setRange
+        self.RTerm = 0.0
 
         self.sample_time = 0.00
         self.current_time = time.time()
@@ -100,13 +101,12 @@ class PID:
 
             # Remember last time and last error for next calculation
             self.last_time = self.current_time
-
-        if error/float(self.range) < 0.001:
-            if self.range != 0:
+        if self.range != 0:
+            if error/float(self.range) < 0.001:
                 self.ITerm = 0
-            self.RTerm = 0
-        else:
-            self.RTerm = self.ITerm / float(error)
+                self.RTerm = 0
+            else:
+                self.RTerm = self.ITerm / float(error)
 
 
         self.last_error = error
