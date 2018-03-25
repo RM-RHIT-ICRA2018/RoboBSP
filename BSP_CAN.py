@@ -6,15 +6,15 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
-PRINT_MOTOR_INFO = False
+PRINT_MOTOR_INFO = True
 PRINT_ROLLING = False
-PRINT_RANGE = [4]
+PRINT_RANGE = [5]
 
-PRINT_Motor_Angle = True
-PRINT_Motor_Speed = True
-PRINT_Upper_Output = True
-PRINT_Lower_Output = True
-PRINT_Control_Signal = False
+PRINT_Motor_Angle = False
+PRINT_Motor_Speed = False
+PRINT_Upper_Output = False
+PRINT_Lower_Output = False
+PRINT_Control_Signal = True
 PRINT_Angle_Massage = False
 PRINT_Speed_Massage = False
 PRINT_Torque_Massage = False
@@ -322,7 +322,7 @@ def CAN_RCV_LOOP():
                         MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
                         if i in range(4,5):
-                            print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
+                            # print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
 
 
                         MOTOR_TIMER[i] = TIME_NOW
