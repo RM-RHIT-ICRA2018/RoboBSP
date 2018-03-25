@@ -10,7 +10,7 @@ PRINT_MOTOR_INFO = True
 PRINT_ROLLING = False
 PRINT_RANGE = [5]
 
-PRINT_Motor_Angle = False
+PRINT_Motor_Angle = True
 PRINT_Motor_Speed = False
 PRINT_Motor_Torque = True
 PRINT_Upper_Output = False
