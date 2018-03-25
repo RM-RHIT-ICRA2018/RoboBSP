@@ -389,7 +389,7 @@ def CAN_RCV_LOOP():
                     prt_spd_msg = " Spd-Msg: "
                     prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
-                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
+                        prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Angle[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]*100) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]*100)))
                         prt_trq = prt_trq + str(i) + "[" + get_sign(MOTOR_Torque[i]) + ("%04.2f] " % (abs(MOTOR_Torque[i])))
                         prt_up_out = prt_up_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
