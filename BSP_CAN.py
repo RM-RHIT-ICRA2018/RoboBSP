@@ -78,18 +78,17 @@ MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[7])
 
 MOTOR_UPPER = []
 MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
-SKIP_UPPER = []
+
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"]))
     MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
     MOTOR_UPPER[i].setSampleTime(0.0001)
-    SKIP_UPPER.append(False)
 
 
 
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-MOTOR_LOWER_LIMIT = [32768, 32768, 32768, 32768, 20000, 6000, 32768]
+MOTOR_LOWER_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
 
 for i in MOTOR_LOWER_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
@@ -98,6 +97,12 @@ for i in range(rob.mono):
     MOTOR_LOWER.append(PID.PID(MOTOR_LOWER_SETTINS[i]["P"], MOTOR_LOWER_SETTINS[i]["I"], MOTOR_LOWER_SETTINS[i]["D"]))
     MOTOR_LOWER[i].SetPoint=MOTOR_LOWER_SetPoints[i]
     MOTOR_LOWER[i].setSampleTime(0.001)
+
+
+SKIP_UPPER = [False,False,False,False,False,False,False]
+
+SKIP_LOWER = [True, True, True, True, False, False, False]
+
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -356,11 +361,10 @@ def CAN_RCV_LOOP():
                     else:
                         phi_count[i] = phi_count[i] + 1
 
-                    # motor_out[i] = MOTOR_UPPER[i].output
-
-                    
-
-                    motor_out[i] = MOTOR_LOWER[i].output
+                    if SKIP_LOWER:
+                        motor_out[i] = MOTOR_UPPER[i].output
+                    else:
+                        motor_out[i] = MOTOR_LOWER[i].output
 
                     if motor_out[i] < 0 and abs(motor_out[i])>MOTOR_LOWER_LIMIT[i]:
                         motor_out[i] = -MOTOR_LOWER_LIMIT[i]
