@@ -323,7 +323,7 @@ def CAN_RCV_LOOP():
                 if can_id == MOTOR_ID_HEX[i] :
                     if 1:#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Torque[i] = torque
-                        MOTOR_Now[i] = (360.0)/(8191.0)*float(data[0]*256+data[1])
+                        MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
                         if init[i]:
                             MOTOR_Angle[i] = MOTOR_Now[i]
                             init[i] = False
