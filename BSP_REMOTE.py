@@ -66,7 +66,7 @@ for i in range(3):
         PID_set[i].append(0.0)
     
 
-fig = Figure(figsize=(10,10), dpi=100)
+fig = Figure(figsize=(10,8), dpi=100)
 ani_spd = fig.add_subplot(5,1,1)
 ani_spd.set_title("Speed")
 ani_ang = fig.add_subplot(5,1,2)
@@ -289,6 +289,8 @@ def update_graph(i):
         ani_spd.set_title("Speed")
         ani_ang.set_title("Angle")
         ani_trq.set_title("Torque")
+        ani_up.set_title("Upper")
+        ani_low.set_title("Lower")
 
 def motor_slection(obs):
     data.graph_motor = obs.get()
@@ -512,7 +514,7 @@ def main():
 
     left_frame.grid(column=0,row=0)
 
-    graph_frame = ttk.Labelframe(root, padding=10, text="Real-time Graphics")
+    graph_frame = ttk.Labelframe(root, padding=2, text="Real-time Graphics")
 
     # ani_spd.plot(XList,YListS)
     # ani_ang.plot(XList,YListA)
@@ -602,7 +604,7 @@ def main():
     root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
-    ani = animation.FuncAnimation(fig, update_graph, interval=3000)
+    ani = animation.FuncAnimation(fig, update_graph, interval=5000)
     
     Msg_thread = MsgThread()
     Msg_thread.start()
