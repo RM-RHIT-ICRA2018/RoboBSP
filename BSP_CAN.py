@@ -82,7 +82,7 @@ MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"]))
     MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
-    MOTOR_UPPER[i].setSampleTime(0.0001)
+    MOTOR_UPPER[i].setSampleTime(0.01)
 
 
 
@@ -96,7 +96,7 @@ for i in MOTOR_OUT_LIMIT:
 for i in range(rob.mono):
     MOTOR_LOWER.append(PID.PID(MOTOR_LOWER_SETTINS[i]["P"], MOTOR_LOWER_SETTINS[i]["I"], MOTOR_LOWER_SETTINS[i]["D"]))
     MOTOR_LOWER[i].SetPoint=MOTOR_LOWER_SetPoints[i]
-    MOTOR_LOWER[i].setSampleTime(0.001)
+    MOTOR_LOWER[i].setSampleTime(0.01)
 
 
 SKIP_UPPER = [False,False,False,False,False,False,False]
