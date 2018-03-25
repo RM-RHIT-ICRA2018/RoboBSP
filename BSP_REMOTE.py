@@ -64,7 +64,7 @@ for i in range(3):
         PID_set[i].append(0.0)
     
 
-fig = Figure(figsize=(5,5), dpi=100)
+fig = Figure(figsize=(10,5), dpi=100)
 ani_spd = fig.add_subplot(3,1,1)
 ani_spd.set_title("Speed")
 ani_ang = fig.add_subplot(3,1,2)
@@ -576,7 +576,7 @@ def main():
     root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
-    ani = animation.FuncAnimation(fig, update_graph, interval=100)
+    ani = animation.FuncAnimation(fig, update_graph, interval=2000)
     
     Msg_thread = MsgThread()
     Msg_thread.start()

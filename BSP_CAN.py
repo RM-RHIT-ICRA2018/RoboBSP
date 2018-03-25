@@ -445,7 +445,7 @@ def CAN_RCV_LOOP():
                 #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
                 sock.send(can_pkt)
                 if  mqtt_count > 25:
-                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
+                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_OMEGA, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES}
                     #print(BSP_ERROR.info(msg_content))
                     client.publish("/MOTOR/", json.dumps(msg_content))
                     publish_real_pid()
