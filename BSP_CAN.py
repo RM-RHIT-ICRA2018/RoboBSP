@@ -12,6 +12,7 @@ PRINT_RANGE = [5]
 
 PRINT_Motor_Angle = False
 PRINT_Motor_Speed = False
+PRINT_Motor_Torque = True
 PRINT_Upper_Output = False
 PRINT_Lower_Output = False
 PRINT_Control_Signal = True
@@ -263,6 +264,7 @@ def CAN_RCV_LOOP():
     MOTOR_TORQUE_MSG_OUT = []
     MOTOR_TIMER = []
     MOTOR_OMEGA = []
+    MOTOR_Torque = []
 
     for i in range(7):
         MOTOR_TIMER.append(time.time())
@@ -277,6 +279,7 @@ def CAN_RCV_LOOP():
         MOTOR_SPEED_MSG_OUT.append(0.0)
         MOTOR_TORQUE_MSG_OUT.append(0.0)
         MOTOR_OMEGA.append(0.0)
+        MOTOR_Torque.append(0.0)
 
     mqtt_count = 0
     phi_count = [0,0,0,0,0,0,0]
@@ -310,6 +313,7 @@ def CAN_RCV_LOOP():
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
                     if 1:#phi_count[i] > 10: #reduce the speed of phi
+                        MOTOR_Torque[i] = torque
                         MOTOR_Now[i] = (360.0)/(8191.0)*float(data[0]*256+data[1])
                         if init[i]:
                             MOTOR_Angle[i] = MOTOR_Now[i]
@@ -377,6 +381,7 @@ def CAN_RCV_LOOP():
 
                     prt_angle = " Ang: "
                     prt_spd = " Spd: "
+                    prt_trq = " Trq: "
                     prt_up_out = " Up.out: "
                     prt_low_out = " Low.out: "
                     prt_control_signal = " Ctrl: "
@@ -386,6 +391,7 @@ def CAN_RCV_LOOP():
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Total[i])))
                         prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]*100) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]*100)))
+                        prt_trq = prt_trq + str(i) + "[" + get_sign(MOTOR_Torque[i]) + ("%04.2f] " % (abs(MOTOR_Torque[i])))
                         prt_up_out = prt_up_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
                         prt_low_out = prt_low_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
                         prt_control_signal = prt_control_signal + str(i) + ("[0x%02x 0x%02x] " % ( int(int(motor_out[i])/256), int(int(motor_out[i])%(256)) ))
@@ -397,6 +403,8 @@ def CAN_RCV_LOOP():
                         printing = printing + prt_angle
                     if PRINT_Motor_Speed:
                         printing = printing + prt_spd
+                    if PRINT_Motor_Torque:
+                        printing = printing + prt_trq
                     if PRINT_Upper_Output:
                         printing = printing + prt_up_out
                     if PRINT_Lower_Output:
