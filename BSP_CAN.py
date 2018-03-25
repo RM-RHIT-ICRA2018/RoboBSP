@@ -280,6 +280,7 @@ def CAN_RCV_LOOP():
 
     mqtt_count = 0
     phi_count = [0,0,0,0,0,0,0]
+    printcount = 0
 
     while 1:
         can_pkt = sock.recv(16)
@@ -372,7 +373,7 @@ def CAN_RCV_LOOP():
                     break
 
             if False not in MOTOR_Updated:
-                if PRINT_MOTOR_INFO:
+                if PRINT_MOTOR_INFO and printcount > 500:
 
                     prt_angle = " Ang: "
                     prt_spd = " Spd: "
@@ -412,6 +413,9 @@ def CAN_RCV_LOOP():
                         print(printing)
                     else:
                         print("\r"+ printing)
+                    printcount = 0
+                else: 
+                    printcount = printcount + 1
 
 
                 CAN_PACK = []
