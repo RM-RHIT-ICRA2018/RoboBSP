@@ -34,11 +34,12 @@ class PID:
     """PID Controller
     """
 
-    def __init__(self, P=0.2, I=0.0, D=0.0):
+    def __init__(self, P=0.2, I=0.0, D=0.0, setRange=0.0):
 
         self.Kp = P
         self.Ki = I
         self.Kd = D
+        self.range = setRange
 
         self.sample_time = 0.00
         self.current_time = time.time()
@@ -78,6 +79,9 @@ class PID:
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
         self.PTerm = self.Kp * error
+
+        if self.range != 0 and error/float(self.range) < 0.01:
+            self.ITerm = 0
 
         if (delta_time >= self.sample_time):
             
