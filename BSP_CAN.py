@@ -319,6 +319,8 @@ def CAN_RCV_LOOP():
                 speed = speed-2**16
             TIME_NOW = time.time()
 
+
+
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
                     if 1:#phi_count[i] > 10: #reduce the speed of phi
@@ -333,7 +335,7 @@ def CAN_RCV_LOOP():
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
 
-                        MOTOR_OMEGA[i] = speed #MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
+                        MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
                         # if i in range(4,5):
                             # print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
@@ -392,7 +394,7 @@ def CAN_RCV_LOOP():
                         motor_out[i] = motor_out[i]+65536
                     MOTOR_Updated[i] = True
                     MOTOR_ANGLE_MSG_OUT[i] = (360.0)/(8191)*(data[0]*256+data[1])
-                    MOTOR_SPEED_MSG_OUT[i] = speed
+                    MOTOR_SPEED_MSG_OUT[i] = MOTOR_OMEGA[i]
                     MOTOR_TORQUE_MSG_OUT[i] = torque
                     break
 
