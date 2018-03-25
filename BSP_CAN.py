@@ -353,7 +353,7 @@ def CAN_RCV_LOOP():
                         if rob.LOWER_PID_TYPE[i] == "SPD":
                             MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
-                            # MOTOR_LOWER[i].update(torque)
+                            MOTOR_LOWER[i].update(torque)
                             pass
 
                         
@@ -361,7 +361,7 @@ def CAN_RCV_LOOP():
                     else:
                         phi_count[i] = phi_count[i] + 1
 
-                    if SKIP_LOWER:
+                    if SKIP_LOWER[i]:
                         motor_out[i] = MOTOR_UPPER[i].output
                     else:
                         motor_out[i] = MOTOR_LOWER[i].output
