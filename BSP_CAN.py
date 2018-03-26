@@ -6,7 +6,7 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
-PRINT_MOTOR_INFO = True
+PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 PRINT_RANGE = [5]
 
@@ -103,7 +103,7 @@ for i in range(rob.mono):
 
 SKIP_UPPER = [False,False,False,False,False,False,False]
 
-SKIP_LOWER = [False, False, False, False, False, False, False]
+SKIP_LOWER = [True, True, True, True, True, True, True]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
