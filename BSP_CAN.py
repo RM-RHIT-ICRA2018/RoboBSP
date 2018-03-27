@@ -48,13 +48,13 @@ PID_Num = len(rob.PID_Items)
 SERIAL_COMM = []
 
 PID_SETTINGS_SET = []
-PID_SETTINGS_SET.append({"P":18, "I":0.0, "D":0.0})             #Chassis_Upper
+PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})             #Chassis_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Chassis_Lower
 
-PID_SETTINGS_SET.append({"P":-60.0 ,"I":0.0, "D":0.0})      #Yaw_Upper
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})      #Yaw_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Yaw_Lower
 
-PID_SETTINGS_SET.append({"P":-65.0 ,"I":0.0 ,"D":0.0})       #Pitch_Upper
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0 ,"D":0.0})       #Pitch_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Pitch_Lower
 
 PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Upper
@@ -349,7 +349,7 @@ def CAN_RCV_LOOP():
 
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
-                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i])
+                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]/10)
                         elif rob.UPPER_PID_TYPE[i] == "ANG":
                             MOTOR_UPPER[i].update(MOTOR_Angle[i])
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
@@ -360,7 +360,7 @@ def CAN_RCV_LOOP():
                             MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
-                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i])
+                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
                             MOTOR_LOWER[i].update(torque)
                             pass

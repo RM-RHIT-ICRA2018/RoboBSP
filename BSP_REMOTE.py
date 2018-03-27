@@ -356,7 +356,7 @@ def main():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    HOST = "192.168.1.2"
+    HOST = "mosquitto.csse.rose-hulman.edu"
 
     print("MQTT client connecting to host ["+HOST+"]")
     
