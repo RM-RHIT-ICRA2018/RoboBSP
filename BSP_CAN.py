@@ -24,7 +24,7 @@ ENABLE_Control_From_Shooter =   False
 ENABLE_Control_From_Decision =  False
 ENABLE_Control_From_Remote =    True
 
-CHASSIS_SPEED_INDEX = 1000
+CHASSIS_SPEED_INDEX = 100
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 
 Remote_Pitch = 0
