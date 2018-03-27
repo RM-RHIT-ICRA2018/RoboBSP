@@ -325,7 +325,7 @@ def CAN_RCV_LOOP():
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if 1:#phi_count[i] > 10: #reduce the speed of phi
+                    if TIME_NOW - MOTOR_TIMER[i] > 0.01:#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Torque[i] = torque
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
                         if init[i]:
@@ -414,7 +414,7 @@ def CAN_RCV_LOOP():
                     prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]*100) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]*100)))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]/10) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]/10)))
                         prt_trq = prt_trq + str(i) + "[" + get_sign(MOTOR_Torque[i]) + ("%04.2f] " % (abs(MOTOR_Torque[i])))
                         prt_up_out = prt_up_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
                         prt_low_out = prt_low_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
