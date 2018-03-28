@@ -90,7 +90,7 @@ for i in range(rob.mono):
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
-MOTOR_LOWER_RANGES = [0,0,0,0,200,500,0]
+MOTOR_LOWER_RANGES = [0,0,0,0,500,200,0]
 
 for i in MOTOR_OUT_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
