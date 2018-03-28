@@ -395,7 +395,7 @@ def CAN_RCV_LOOP():
 
                     if motor_out[i] > MOTOR_OUT_LIMIT[i]:
                         motor_out[i] = MOTOR_OUT_LIMIT[i] - 1
-
+                    motor_out[i] = - motor_out[i]
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
                     MOTOR_Updated[i] = True
