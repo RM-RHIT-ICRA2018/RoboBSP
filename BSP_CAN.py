@@ -90,7 +90,7 @@ for i in range(rob.mono):
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
-MOTOR_LOWER_RANGES = [0,0,0,0,500,500,0]
+MOTOR_LOWER_RANGES = [0,0,0,0,200,500,0]
 
 for i in MOTOR_OUT_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
@@ -103,7 +103,7 @@ for i in range(rob.mono):
 
 SKIP_UPPER = [False,False,False,False,False,False,False]
 
-SKIP_LOWER = [True, True, True, True, True, True, True]
+SKIP_LOWER = [True, True, True, True, False, False, True]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
@@ -357,7 +357,11 @@ def CAN_RCV_LOOP():
 
                         if 1:#not SKIP_UPPER:
                             UPPER_OUT[i] = MOTOR_UPPER[i].output
-                            MOTOR_LOWER[i].SetPoint = MOTOR_UPPER[i].output
+                            if UPPER_OUT[i] > MOTOR_LOWER_RANGES[i]:
+                                UPPER_OUT[i] = MOTOR_LOWER_RANGES[i]
+                            elif UPPER_OUT[i] < -MOTOR_LOWER_RANGES[i]:
+                                UPPER_OUT[i] = -MOTOR_LOWER_RANGES[i]
+                            MOTOR_LOWER[i].SetPoint = UPPER_OUT[i]
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
                             MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
