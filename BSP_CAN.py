@@ -174,6 +174,7 @@ def on_message(client, userdata, msg):
     # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     MsgPayload = json.loads(msg.payload.decode("utf-8"))
     MsgTopic = msg.topic
+    print(MsgTopic)
     # if MsgPayload["Type"] == "MotorTye":
     #     can_pkt = struct.pack(fmt, int(MsgPayload.ID),8,bytes(MsgPayload.Torques))
     #     sock.send(can_pkt)
@@ -187,7 +188,7 @@ def massageProcess():
     global MsgPayload
     global ENABLE_Control_From_Remote
     # print("Msg Processing")
-    print(MsgTopic)
+    # print(MsgTopic)
     if MsgTopic == "/REMOTE/" and ENABLE_Control_From_Remote:
         Robot_X = MsgPayload["XSpeed"]
         Robot_Y = MsgPayload["YSpeed"]
