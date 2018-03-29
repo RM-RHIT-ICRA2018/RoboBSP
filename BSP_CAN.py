@@ -251,10 +251,10 @@ def massageProcess():
         global PITCH_ANGLE
         global YAW_OMEGA
         global PITCH_OMEGA
-        YAW_ANGLE = MsgPayload["Yaw"]
-        PITCH_ANGLE = MsgPayload["Pitch"]
-        YAW_OMEGA = MsgPayload["GyroYaw"]
-        PITCH_OMEGA = MsgPayload["GyroPitch"]
+        YAW_ANGLE = float(MsgPayload["Yaw"])
+        PITCH_ANGLE = float(MsgPayload["Pitch"])
+        YAW_OMEGA = float(MsgPayload["GyroYaw"])
+        PITCH_OMEGA = float(MsgPayload["GyroPitch"])
         # print("imu updated")
 
 
