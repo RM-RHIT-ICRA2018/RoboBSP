@@ -161,7 +161,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/IMU/AHRS")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
-    Can_thread = Can_thread()
+    Can_thread = CanThread()
     Can_thread.start()
     # t = threading.Thread(target = CAN_RCV_LOOP)
     # t.start()
