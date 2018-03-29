@@ -169,7 +169,7 @@ MsgPayload = {}
 
 def on_message(client, userdata, msg):
     global ENABLE_Control_From_Remote
-    print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     MsgPayload = json.loads(msg.payload.decode("utf-8"))
     MsgTopic = msg.topic
     # if MsgPayload["Type"] == "MotorTye":
@@ -248,6 +248,7 @@ def massageProcess():
         PITCH_ANGLE = MsgPayload["Pitch"]
         YAW_OMEGA = MsgPayload["GyroYaw"]
         PITCH_OMEGA = MsgPayload["GyroPitch"]
+        print("imu updated")
 
 
     elif MsgTopic == "/REMOTE/EXP":
