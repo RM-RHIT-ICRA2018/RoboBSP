@@ -90,6 +90,9 @@ for i in range(rob.mono):
     MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
     MOTOR_UPPER[i].setSampleTime(0.01)
 
+MOTOR_UPPER[4].setDegreeFixer(True)
+MOTOR_UPPER[5].setDegreeFixer(True)
+
 
 
 MOTOR_LOWER = []
