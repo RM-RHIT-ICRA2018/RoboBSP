@@ -170,7 +170,7 @@ def on_connect(client, userdata, flags, rc):
     # t.start()
 
 
-MsgPayload = {"/REMOTE/": "", "/CONFIG/": "", "/SHOOTER/PUB/": "", "/PID_REMOTE/": "", "/REMOTE/SWITCH": "", "/IMU/AHRS": "", "/REMOTE/EXP": ""}
+MsgPayload = {"/REMOTE/": {}, "/CONFIG/": {}, "/SHOOTER/PUB/": {}, "/PID_REMOTE/": {}, "/REMOTE/SWITCH": {}, "/IMU/AHRS": {}, "/REMOTE/EXP": {}}
 
 def on_message(client, userdata, msg):
     global MsgPayload
@@ -191,7 +191,7 @@ def massageProcess():
     global ENABLE_Control_From_Remote
     # print("Msg Processing")
     # print(MsgTopic)
-    if MsgPayload["/REMOTE/"] != "" and ENABLE_Control_From_Remote:
+    if MsgPayload["/REMOTE/"] != {} and ENABLE_Control_From_Remote:
         payload = MsgPayload["/REMOTE/"]
         Robot_X = payload["XSpeed"]
         Robot_Y = payload["YSpeed"]
@@ -205,9 +205,9 @@ def massageProcess():
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
-        MsgPayload["/REMOTE/"] = ""
+        MsgPayload["/REMOTE/"] = {}
 
-    if MsgPayload["/CONFIG/"] != "":
+    if MsgPayload["/CONFIG/"] != {}:
         payload = MsgPayload["/CONFIG/"]
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
@@ -218,9 +218,9 @@ def massageProcess():
             elif Config_Type == "Lower":
                 SKIP_UPPER[i] = True
                 MOTOR_LOWER[i].SetPoint = Config_Set[i]
-        MsgPayload["/CONFIG/"] = ""
+        MsgPayload["/CONFIG/"] = {}
 
-    if MsgPayload["/SHOOTER/PUB/"] != "":
+    if MsgPayload["/SHOOTER/PUB/"] != {}:
         payload = MsgPayload["/SHOOTER/PUB/"]
         global PREVIOUS_SHOOT_TIME_COUNT
         MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + payload["YawPhi"]
@@ -231,10 +231,10 @@ def massageProcess():
             MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_POS_TURN
             s = threading.Timer(0.1, FeederReverseTurn)
             s.start()
-        MsgPayload["/SHOOTER/PUB/"] = ""
+        MsgPayload["/SHOOTER/PUB/"] = {}
 
 
-    if MsgPayload["/PID_REMOTE/"] != "":
+    if MsgPayload["/PID_REMOTE/"] != {}:
         payload = MsgPayload["/PID_REMOTE/"]
         Ps = payload.get("Ps")
         Is = payload.get("Is")
@@ -246,17 +246,17 @@ def massageProcess():
         print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
-        MsgPayload["/PID_REMOTE/"] = ""
+        MsgPayload["/PID_REMOTE/"] = {}
 
-    if MsgPayload["/REMOTE/SWITCH"] != "":
+    if MsgPayload["/REMOTE/SWITCH"] != {}:
         payload = MsgPayload["/REMOTE/SWITCH"]
         ENABLE_Control_From_Decision = payload["CTRL_Decision"]
         ENABLE_Control_From_Remote = payload["CTRL_Remote"]
         ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
-        MsgPayload["/REMOTE/SWITCH"] = ""
+        MsgPayload["/REMOTE/SWITCH"] = {}
 
 
-    if MsgPayload["/IMU/AHRS"] != "":
+    if MsgPayload["/IMU/AHRS"] != {}:
         payload = MsgPayload["/IMU/AHRS"]
         global YAW_ANGLE
         global PITCH_ANGLE
@@ -267,15 +267,15 @@ def massageProcess():
         YAW_OMEGA = float(payload["GyroYaw"])
         PITCH_OMEGA = float(payload["GyroPitch"])
         # print("imu updated")
-        MsgPayload["/IMU/AHRS"] = ""
+        MsgPayload["/IMU/AHRS"] = {}
 
 
-    if MsgPayload["/REMOTE/EXP"] != "":
+    if MsgPayload["/REMOTE/EXP"] != {}:
         payload = MsgPayload["/REMOTE/EXP"]
         MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
         MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
-        MsgPayload["/REMOTE/EXP"] = ""
+        MsgPayload["/REMOTE/EXP"] = {}
 
 
 def compare_pid():
