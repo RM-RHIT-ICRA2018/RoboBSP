@@ -174,7 +174,7 @@ def on_message(client, userdata, msg):
     # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     MsgPayload = json.loads(msg.payload.decode("utf-8"))
     MsgTopic = msg.topic
-    print(MsgTopic)
+    # print(MsgTopic)
     # if MsgPayload["Type"] == "MotorTye":
     #     can_pkt = struct.pack(fmt, int(MsgPayload.ID),8,bytes(MsgPayload.Torques))
     #     sock.send(can_pkt)
@@ -342,6 +342,7 @@ def CAN_RCV_LOOP():
     printcount = 0
 
     while 1:
+        print("can loop")
         can_pkt = sock.recv(16)
         can_id, length, data = struct.unpack(fmt, can_pkt)
         can_id &= socket.CAN_EFF_MASK
