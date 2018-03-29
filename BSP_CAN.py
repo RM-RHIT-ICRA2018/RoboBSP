@@ -263,8 +263,6 @@ def massageProcess():
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
         MsgPayload["/REMOTE/EXP"] = {}
 
-def imuMassageProcess():
-    global MsgPayload
     if MsgPayload["/IMU/AHRS"] != {}:
         payload = MsgPayload["/IMU/AHRS"]
         global YAW_ANGLE
@@ -277,6 +275,10 @@ def imuMassageProcess():
         PITCH_OMEGA = float(payload["GyroPitch"])
         # print("imu updated")
         MsgPayload["/IMU/AHRS"] = {}
+
+def imuMassageProcess():
+    global MsgPayload
+    
 
 
 def compare_pid():
@@ -572,8 +574,8 @@ client.connect("127.0.0.1", 1883, 60)
 
 Msg_thread = MsgThread()
 Msg_thread.start()
-Msg_imu_thread = Msg_imu_Thread()
-Msg_imu_thread.start()
+# Msg_imu_thread = Msg_imu_Thread()
+# Msg_imu_thread.start()
 
 client.loop_forever()
 
