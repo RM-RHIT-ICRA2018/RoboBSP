@@ -178,6 +178,10 @@ def on_message(client, userdata, msg):
     global OnIMU
     global IMUpayload
     global ENABLE_Control_From_Remote
+    global YAW_ANGLE
+    global PITCH_ANGLE
+    global YAW_OMEGA
+    global PITCH_OMEGA
     # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
     # print(MsgTopic)
