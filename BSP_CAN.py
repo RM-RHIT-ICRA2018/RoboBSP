@@ -168,6 +168,8 @@ MsgTopic = ""
 MsgPayload = {}
 
 def on_message(client, userdata, msg):
+    global MsgTopic
+    global MsgPayload
     global ENABLE_Control_From_Remote
     # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     MsgPayload = json.loads(msg.payload.decode("utf-8"))
