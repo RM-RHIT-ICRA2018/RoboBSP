@@ -90,7 +90,7 @@ for i in range(rob.mono):
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
-MOTOR_LOWER_RANGES = [0,0,0,0,500,200,0]
+MOTOR_LOWER_RANGES = [0,0,0,0,200,200,0]
 
 for i in MOTOR_OUT_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
@@ -172,7 +172,7 @@ def on_message(client, userdata, msg):
         Robot_Phi = payload["PhiSpeed"]
         Remote_Yaw = payload["Yaw"]
         Remote_Pitch = payload["Pitch"]
-        
+
         MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
         MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
         # MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
@@ -349,7 +349,7 @@ def CAN_RCV_LOOP():
 
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
-                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i]/10)
+                            MOTOR_UPPER[i].update(MOTOR_OMEGA[i])
                         elif rob.UPPER_PID_TYPE[i] == "ANG":
                             MOTOR_UPPER[i].update(MOTOR_Angle[i])
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
@@ -364,12 +364,12 @@ def CAN_RCV_LOOP():
                             MOTOR_LOWER[i].SetPoint = UPPER_OUT[i]
 
                         if rob.LOWER_PID_TYPE[i] == "SPD":
-                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i]/10)
+                            MOTOR_LOWER[i].update(MOTOR_OMEGA[i])
                         elif rob.LOWER_PID_TYPE[i] == "TRQ":
                             MOTOR_LOWER[i].update(torque)
                             pass
 
-                        
+
                         phi_count[i] = 0
                     else:
                         phi_count[i] = phi_count[i] + 1
@@ -450,7 +450,7 @@ def CAN_RCV_LOOP():
                     else:
                         print("\r"+ printing)
                     printcount = 0
-                else: 
+                else:
                     printcount = printcount + 1
 
 
