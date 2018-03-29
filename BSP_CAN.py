@@ -553,7 +553,7 @@ def CAN_RCV_LOOP():
                         motor_out[i] = motor_out[i]+65536
                     MOTOR_Updated[i] = True
                     MOTOR_ANGLE_MSG_OUT[i] = MOTOR_Angle[i]
-                    MOTOR_SPEED_MSG_OUT[i] = MOTOR_OMEGA[i]
+                    MOTOR_SPEED_MSG_OUT[i] = (360.0)/(8191)*(data[0]*256+data[1])#MOTOR_OMEGA[i]
                     MOTOR_TORQUE_MSG_OUT[i] = torque
                     break
 
