@@ -164,32 +164,44 @@ def on_connect(client, userdata, flags, rc):
     t = threading.Thread(target = CAN_RCV_LOOP)
     t.start()
 
+MsgTopic = ""
+MsgPayload = {}
+
 def on_message(client, userdata, msg):
     global ENABLE_Control_From_Remote
     print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
-    payload = json.loads(msg.payload.decode("utf-8"))
-    # if payload["Type"] == "MotorTye":
-    #     can_pkt = struct.pack(fmt, int(payload.ID),8,bytes(payload.Torques))
+    MsgPayload = json.loads(msg.payload.decode("utf-8"))
+    MsgTopic = msg.topic
+    # if MsgPayload["Type"] == "MotorTye":
+    #     can_pkt = struct.pack(fmt, int(MsgPayload.ID),8,bytes(MsgPayload.Torques))
     #     sock.send(can_pkt)
     #     print(BSP_ERROR.info("SocketCAN Package Send"))
-    if msg.topic == "/REMOTE/" and ENABLE_Control_From_Remote:
-        Robot_X = payload["XSpeed"]
-        Robot_Y = payload["YSpeed"]
-        Robot_Phi = payload["PhiSpeed"]
-        Remote_Yaw = payload["Yaw"]
-        Remote_Pitch = payload["Pitch"]
+    
 
-        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
-        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
-        # MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
+    
+
+def massageProcess():
+    global MsgTopic
+    global MsgPayload
+    global ENABLE_Control_From_Remote
+    if MsgTopic == "/REMOTE/" and ENABLE_Control_From_Remote:
+        Robot_X = MsgPayload["XSpeed"]
+        Robot_Y = MsgPayload["YSpeed"]
+        Robot_Phi = MsgPayload["PhiSpeed"]
+        Remote_Yaw = MsgPayload["Yaw"]
+        Remote_Pitch = MsgPayload["Pitch"]
+
+        MOTOR_UPPER[4].SetPoint = MsgPayload["YawAngle"]
+        MOTOR_UPPER[5].SetPoint = MsgPayload["PitchAngle"]
+        # MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + MsgPayload["Pos"]
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         return
 
-    elif msg.topic == "/CONFIG/":
-        Config_Type = payload["Type"]
-        Config_Set = payload["Set"]
+    elif MsgTopic == "/CONFIG/":
+        Config_Type = MsgPayload["Type"]
+        Config_Set = MsgPayload["Set"]
         for i in range(rob.mono):
             if Config_Type == "Upper":
                 SKIP_UPPER[i] = False
@@ -198,22 +210,22 @@ def on_message(client, userdata, msg):
                 SKIP_UPPER[i] = True
                 MOTOR_LOWER[i].SetPoint = Config_Set[i]
 
-    elif msg.topic == "/SHOOTER/PUB/" :
+    elif MsgTopic == "/SHOOTER/PUB/" :
         global PREVIOUS_SHOOT_TIME_COUNT
-        MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + payload["YawPhi"]
-        MOTOR_UPPER[5].SetPoint = MOTOR_UPPER[5].SetPoint + payload["PitchPhi"]
+        MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + MsgPayload["YawPhi"]
+        MOTOR_UPPER[5].SetPoint = MOTOR_UPPER[5].SetPoint + MsgPayload["PitchPhi"]
 
-        if payload["ShootStatus"] == "Fire" and time.time() - PREVIOUS_SHOOT_TIME_COUNT > 0.1:
+        if MsgPayload["ShootStatus"] == "Fire" and time.time() - PREVIOUS_SHOOT_TIME_COUNT > 0.1:
             PREVIOUS_SHOOT_TIME_COUNT = time.time()
             MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_POS_TURN
             s = threading.Timer(0.1, FeederReverseTurn)
             s.start()
 
 
-    elif msg.topic == "/PID_REMOTE/" :
-        Ps = payload.get("Ps")
-        Is = payload.get("Is")
-        Ds = payload.get("Ds")
+    elif MsgTopic == "/PID_REMOTE/" :
+        Ps = MsgPayload.get("Ps")
+        Is = MsgPayload.get("Is")
+        Ds = MsgPayload.get("Ds")
         for i in range(PID_Num):
             PID_SETTINGS_REAL[i]["P"] = Ps[i]
             PID_SETTINGS_REAL[i]["I"] = Is[i]
@@ -221,27 +233,31 @@ def on_message(client, userdata, msg):
         print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
-    elif msg.topic == "/REMOTE/SWITCH":
-        ENABLE_Control_From_Decision = payload["CTRL_Decision"]
-        ENABLE_Control_From_Remote = payload["CTRL_Remote"]
-        ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
+    elif MsgTopic == "/REMOTE/SWITCH":
+        ENABLE_Control_From_Decision = MsgPayload["CTRL_Decision"]
+        ENABLE_Control_From_Remote = MsgPayload["CTRL_Remote"]
+        ENABLE_Control_From_Shooter = MsgPayload["CTRL_Shooter"]
 
 
-    elif msg.topic == "/IMU/AHRS":
+    elif MsgTopic == "/IMU/AHRS":
         global YAW_ANGLE
         global PITCH_ANGLE
         global YAW_OMEGA
         global PITCH_OMEGA
-        YAW_ANGLE = payload["Yaw"]
-        PITCH_ANGLE = payload["Pitch"]
-        YAW_OMEGA = payload["GyroYaw"]
-        PITCH_OMEGA = payload["GyroPitch"]
+        YAW_ANGLE = MsgPayload["Yaw"]
+        PITCH_ANGLE = MsgPayload["Pitch"]
+        YAW_OMEGA = MsgPayload["GyroYaw"]
+        PITCH_OMEGA = MsgPayload["GyroPitch"]
 
 
-    if msg.topic == "/REMOTE/EXP":
-        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
-        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
-        MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
+    elif MsgTopic == "/REMOTE/EXP":
+        MOTOR_UPPER[4].SetPoint = MsgPayload["YawAngle"]
+        MOTOR_UPPER[5].SetPoint = MsgPayload["PitchAngle"]
+        MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + MsgPayload["Pos"]
+
+    if not MsgTopic == "":
+        MsgTopic = ""
+        MsgPayload = {}
 
 def compare_pid():
     for i in range(int(PID_Num)):
@@ -266,7 +282,13 @@ def publish_real_pid():
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
     client.publish("/PID_FEEDBACK/", json.dumps(pid_msg))
 
+class MsgThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
+    def run(self):
+        while 1:
+            massageProcess()
 
 
 def get_sign(num):
@@ -511,6 +533,10 @@ client.on_message = on_message
 print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
+
+Msg_thread = MsgThread()
+Msg_thread.start()
+
 client.loop_forever()
 
 try:
