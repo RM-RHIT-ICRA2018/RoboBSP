@@ -244,10 +244,10 @@ def on_message(client, userdata, msg):
         MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
 
-    if not OnIMU:
-        if msg.topic == "/IMU/AHRS":
-            OnIMU = True
-            IMUpayload = payload
+
+    if msg.topic == "/IMU/AHRS":
+        OnIMU = True
+        IMUpayload = payload
     
 
     
