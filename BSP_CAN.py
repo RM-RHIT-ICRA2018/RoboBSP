@@ -255,7 +255,7 @@ def massageProcess():
         PITCH_ANGLE = MsgPayload["Pitch"]
         YAW_OMEGA = MsgPayload["GyroYaw"]
         PITCH_OMEGA = MsgPayload["GyroPitch"]
-        print("imu updated")
+        # print("imu updated")
 
 
     elif MsgTopic == "/REMOTE/EXP":
@@ -351,7 +351,7 @@ def CAN_RCV_LOOP():
     printcount = 0
 
     while 1:
-        print("can loop")
+        # print("can loop")
         can_pkt = sock.recv(16)
         can_id, length, data = struct.unpack(fmt, can_pkt)
         can_id &= socket.CAN_EFF_MASK
