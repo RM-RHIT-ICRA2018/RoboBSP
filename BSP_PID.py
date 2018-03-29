@@ -41,6 +41,7 @@ class PID:
         self.Kd = D
         self.range = setRange
         self.RTerm = 0.0
+        self.degreeFixer = False
 
         self.sample_time = 0.00
         self.current_time = time.time()
@@ -75,7 +76,13 @@ class PID:
            Test PID with Kp=1.2, Ki=1, Kd=0.001 (test_pid.py)
 
         """
+        
         error = self.SetPoint - feedback_value
+        if self.degreeFixer:
+            if error > 180:
+                error = error - 360
+            elif error < -180:
+                error = error + 360
 
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
@@ -151,4 +158,8 @@ class PID:
 
     def getD(self):
         return self.Kd
+
+    def setDegreeFixer(self, b):
+        self.degreeFixer = b
+
 
