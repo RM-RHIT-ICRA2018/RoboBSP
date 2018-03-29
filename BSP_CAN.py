@@ -186,7 +186,8 @@ def massageProcess():
     global MsgTopic
     global MsgPayload
     global ENABLE_Control_From_Remote
-    print("Msg Processing")
+    # print("Msg Processing")
+    print(MsgTopic)
     if MsgTopic == "/REMOTE/" and ENABLE_Control_From_Remote:
         Robot_X = MsgPayload["XSpeed"]
         Robot_Y = MsgPayload["YSpeed"]
