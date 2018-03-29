@@ -247,6 +247,7 @@ def on_message(client, userdata, msg):
 
     if msg.topic == "/IMU/AHRS":
         OnIMU = True
+        print("f")
         IMUpayload = payload
     
 
@@ -347,6 +348,7 @@ def imuMassageProcess():
         # print("imu updated")
         # MsgPayload["/IMU/AHRS"] = {}
         OnIMU = False
+        print("u")
     
 
 
