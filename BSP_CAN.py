@@ -245,10 +245,14 @@ def on_message(client, userdata, msg):
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
 
 
-    if msg.topic == "/IMU/AHRS":
-        OnIMU = True
-        print("f")
-        IMUpayload = payload
+    elif msg.topic == "/IMU/AHRS":
+        YAW_ANGLE = payload["Yaw"]
+        PITCH_ANGLE = payload["Pitch"]
+        YAW_OMEGA = payload["GyroYaw"]
+        PITCH_OMEGA = payload["GyroPitch"]
+        # OnIMU = True
+        # print("f")
+        # IMUpayload = payload
     
 
     
@@ -645,8 +649,8 @@ client.connect("127.0.0.1", 1883, 60)
 
 # Msg_thread = MsgThread()
 # Msg_thread.start()
-Msg_imu_thread = Msg_imu_Thread()
-Msg_imu_thread.start()
+# Msg_imu_thread = Msg_imu_Thread()
+# Msg_imu_thread.start()
 
 client.loop_forever()
 
