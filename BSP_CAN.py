@@ -207,6 +207,20 @@ def massageProcess():
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
         MsgPayload["/REMOTE/"] = {}
 
+    if MsgPayload["/PID_REMOTE/"] != {}:
+        payload = MsgPayload["/PID_REMOTE/"]
+        Ps = payload.get("Ps")
+        Is = payload.get("Is")
+        Ds = payload.get("Ds")
+        for i in range(PID_Num):
+            PID_SETTINGS_REAL[i]["P"] = Ps[i]
+            PID_SETTINGS_REAL[i]["I"] = Is[i]
+            PID_SETTINGS_REAL[i]["D"] = Ds[i]
+        print(str(PID_SETTINGS_REAL[0]["P"]))
+        update_PID()
+        publish_real_pid()
+        MsgPayload["/PID_REMOTE/"] = {}
+
     if MsgPayload["/CONFIG/"] != {}:
         payload = MsgPayload["/CONFIG/"]
         Config_Type = payload["Type"]
@@ -234,20 +248,6 @@ def massageProcess():
         MsgPayload["/SHOOTER/PUB/"] = {}
 
 
-    if MsgPayload["/PID_REMOTE/"] != {}:
-        payload = MsgPayload["/PID_REMOTE/"]
-        Ps = payload.get("Ps")
-        Is = payload.get("Is")
-        Ds = payload.get("Ds")
-        for i in range(PID_Num):
-            PID_SETTINGS_REAL[i]["P"] = Ps[i]
-            PID_SETTINGS_REAL[i]["I"] = Is[i]
-            PID_SETTINGS_REAL[i]["D"] = Ds[i]
-        print(str(PID_SETTINGS_REAL[0]["P"]))
-        update_PID()
-        publish_real_pid()
-        MsgPayload["/PID_REMOTE/"] = {}
-
     if MsgPayload["/REMOTE/SWITCH"] != {}:
         payload = MsgPayload["/REMOTE/SWITCH"]
         ENABLE_Control_From_Decision = payload["CTRL_Decision"]
@@ -256,6 +256,15 @@ def massageProcess():
         MsgPayload["/REMOTE/SWITCH"] = {}
 
 
+    if MsgPayload["/REMOTE/EXP"] != {}:
+        payload = MsgPayload["/REMOTE/EXP"]
+        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
+        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
+        MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
+        MsgPayload["/REMOTE/EXP"] = {}
+
+def imuMassageProcess():
+    global MsgPayload
     if MsgPayload["/IMU/AHRS"] != {}:
         payload = MsgPayload["/IMU/AHRS"]
         global YAW_ANGLE
@@ -268,14 +277,6 @@ def massageProcess():
         PITCH_OMEGA = float(payload["GyroPitch"])
         # print("imu updated")
         MsgPayload["/IMU/AHRS"] = {}
-
-
-    if MsgPayload["/REMOTE/EXP"] != {}:
-        payload = MsgPayload["/REMOTE/EXP"]
-        MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
-        MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
-        MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
-        MsgPayload["/REMOTE/EXP"] = {}
 
 
 def compare_pid():
@@ -308,6 +309,14 @@ class MsgThread(threading.Thread):
     def run(self):
         while 1:
             massageProcess()
+
+class Msg_imu_Thread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            imuMassageProcess()
 
 class CanThread(threading.Thread):
     def __init__(self):
@@ -563,6 +572,8 @@ client.connect("127.0.0.1", 1883, 60)
 
 Msg_thread = MsgThread()
 Msg_thread.start()
+Msg_imu_thread = Msg_imu_Thread()
+Msg_imu_thread.start()
 
 client.loop_forever()
 
