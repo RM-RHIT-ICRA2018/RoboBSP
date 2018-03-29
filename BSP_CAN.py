@@ -171,28 +171,20 @@ def on_connect(client, userdata, flags, rc):
 
 
 MsgPayload = {"/REMOTE/": {}, "/CONFIG/": {}, "/SHOOTER/PUB/": {}, "/PID_REMOTE/": {}, "/REMOTE/SWITCH": {}, "/IMU/AHRS": {}, "/REMOTE/EXP": {}}
+OnIMU = False
+IMUpayload = {}
 
 def on_message(client, userdata, msg):
-    global MsgPayload
+    global OnIMU
+    global IMUpayload
     global ENABLE_Control_From_Remote
     # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
-    MsgPayload[msg.topic] = json.loads(msg.payload.decode("utf-8"))
+    payload = json.loads(msg.payload.decode("utf-8"))
     # print(MsgTopic)
-    # if MsgPayload["Type"] == "MotorTye":
-    #     can_pkt = struct.pack(fmt, int(MsgPayload.ID),8,bytes(MsgPayload.Torques))
-    #     sock.send(can_pkt)
-    #     print(BSP_ERROR.info("SocketCAN Package Send"))
-    
 
     
 
-def massageProcess():
-    global MsgPayload
-    global ENABLE_Control_From_Remote
-    # print("Msg Processing")
-    # print(MsgTopic)
-    if MsgPayload["/REMOTE/"] != {} and ENABLE_Control_From_Remote:
-        payload = MsgPayload["/REMOTE/"]
+    if msg.topic == "/REMOTE/" and ENABLE_Control_From_Remote:
         Robot_X = payload["XSpeed"]
         Robot_Y = payload["YSpeed"]
         Robot_Phi = payload["PhiSpeed"]
@@ -205,10 +197,8 @@ def massageProcess():
         MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
         for i in range(4):
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
-        MsgPayload["/REMOTE/"] = {}
 
-    if MsgPayload["/PID_REMOTE/"] != {}:
-        payload = MsgPayload["/PID_REMOTE/"]
+    elif msg.topic == "/PID_REMOTE/":
         Ps = payload.get("Ps")
         Is = payload.get("Is")
         Ds = payload.get("Ds")
@@ -219,10 +209,8 @@ def massageProcess():
         print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
-        MsgPayload["/PID_REMOTE/"] = {}
 
-    if MsgPayload["/CONFIG/"] != {}:
-        payload = MsgPayload["/CONFIG/"]
+    elif msg.topic == "/CONFIG/":
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
         for i in range(rob.mono):
@@ -232,10 +220,8 @@ def massageProcess():
             elif Config_Type == "Lower":
                 SKIP_UPPER[i] = True
                 MOTOR_LOWER[i].SetPoint = Config_Set[i]
-        MsgPayload["/CONFIG/"] = {}
 
-    if MsgPayload["/SHOOTER/PUB/"] != {}:
-        payload = MsgPayload["/SHOOTER/PUB/"]
+    elif msg.topic == "/SHOOTER/PUB/":
         global PREVIOUS_SHOOT_TIME_COUNT
         MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + payload["YawPhi"]
         MOTOR_UPPER[5].SetPoint = MOTOR_UPPER[5].SetPoint + payload["PitchPhi"]
@@ -245,30 +231,111 @@ def massageProcess():
             MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_POS_TURN
             s = threading.Timer(0.1, FeederReverseTurn)
             s.start()
-        MsgPayload["/SHOOTER/PUB/"] = {}
 
 
-    if MsgPayload["/REMOTE/SWITCH"] != {}:
-        payload = MsgPayload["/REMOTE/SWITCH"]
+    elif msg.topic == "/REMOTE/SWITCH":
         ENABLE_Control_From_Decision = payload["CTRL_Decision"]
         ENABLE_Control_From_Remote = payload["CTRL_Remote"]
         ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
-        MsgPayload["/REMOTE/SWITCH"] = {}
 
 
-    if MsgPayload["/REMOTE/EXP"] != {}:
-        payload = MsgPayload["/REMOTE/EXP"]
+    elif msg.topic == "/REMOTE/EXP":
         MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
         MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
-        MsgPayload["/REMOTE/EXP"] = {}
+
+    if not OnIMU:
+        if msg.topic == "/IMU/AHRS":
+            OnIMU = True
+            IMUpayload = payload
+    
+
+    
+
+def massageProcess():
+    global MsgPayload
+    global ENABLE_Control_From_Remote
+    # print("Msg Processing")
+    # print(MsgTopic)
+    # if MsgPayload["/REMOTE/"] != {} and ENABLE_Control_From_Remote:
+    #     payload = MsgPayload["/REMOTE/"]
+    #     Robot_X = payload["XSpeed"]
+    #     Robot_Y = payload["YSpeed"]
+    #     Robot_Phi = payload["PhiSpeed"]
+    #     Remote_Yaw = payload["Yaw"]
+    #     Remote_Pitch = payload["Pitch"]
+
+    #     MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
+    #     MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
+    #     # MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
+    #     MOTOR_Remote = [-Robot_X+Robot_Y+Robot_Phi, Robot_X+Robot_Y+Robot_Phi, Robot_X-Robot_Y+Robot_Phi, -Robot_X-Robot_Y+Robot_Phi]
+    #     for i in range(4):
+    #         MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
+    #     MsgPayload["/REMOTE/"] = {}
+
+    # if MsgPayload["/PID_REMOTE/"] != {}:
+    #     payload = MsgPayload["/PID_REMOTE/"]
+    #     Ps = payload.get("Ps")
+    #     Is = payload.get("Is")
+    #     Ds = payload.get("Ds")
+    #     for i in range(PID_Num):
+    #         PID_SETTINGS_REAL[i]["P"] = Ps[i]
+    #         PID_SETTINGS_REAL[i]["I"] = Is[i]
+    #         PID_SETTINGS_REAL[i]["D"] = Ds[i]
+    #     print(str(PID_SETTINGS_REAL[0]["P"]))
+    #     update_PID()
+    #     publish_real_pid()
+    #     MsgPayload["/PID_REMOTE/"] = {}
+
+    # if MsgPayload["/CONFIG/"] != {}:
+    #     payload = MsgPayload["/CONFIG/"]
+    #     Config_Type = payload["Type"]
+    #     Config_Set = payload["Set"]
+    #     for i in range(rob.mono):
+    #         if Config_Type == "Upper":
+    #             SKIP_UPPER[i] = False
+    #             MOTOR_UPPER[i].SetPoint = Config_Set[i]
+    #         elif Config_Type == "Lower":
+    #             SKIP_UPPER[i] = True
+    #             MOTOR_LOWER[i].SetPoint = Config_Set[i]
+    #     MsgPayload["/CONFIG/"] = {}
+
+    # if MsgPayload["/SHOOTER/PUB/"] != {}:
+    #     payload = MsgPayload["/SHOOTER/PUB/"]
+    #     global PREVIOUS_SHOOT_TIME_COUNT
+    #     MOTOR_UPPER[4].SetPoint = MOTOR_UPPER[4].SetPoint + payload["YawPhi"]
+    #     MOTOR_UPPER[5].SetPoint = MOTOR_UPPER[5].SetPoint + payload["PitchPhi"]
+
+    #     if payload["ShootStatus"] == "Fire" and time.time() - PREVIOUS_SHOOT_TIME_COUNT > 0.1:
+    #         PREVIOUS_SHOOT_TIME_COUNT = time.time()
+    #         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + FEEDER_POS_TURN
+    #         s = threading.Timer(0.1, FeederReverseTurn)
+    #         s.start()
+    #     MsgPayload["/SHOOTER/PUB/"] = {}
+
+
+    # if MsgPayload["/REMOTE/SWITCH"] != {}:
+    #     payload = MsgPayload["/REMOTE/SWITCH"]
+    #     ENABLE_Control_From_Decision = payload["CTRL_Decision"]
+    #     ENABLE_Control_From_Remote = payload["CTRL_Remote"]
+    #     ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
+    #     MsgPayload["/REMOTE/SWITCH"] = {}
+
+
+    # if MsgPayload["/REMOTE/EXP"] != {}:
+    #     payload = MsgPayload["/REMOTE/EXP"]
+    #     MOTOR_UPPER[4].SetPoint = payload["YawAngle"]
+    #     MOTOR_UPPER[5].SetPoint = payload["PitchAngle"]
+    #     MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
+    #     MsgPayload["/REMOTE/EXP"] = {}
 
     
 
 def imuMassageProcess():
-    global MsgPayload
-    if MsgPayload["/IMU/AHRS"] != {}:
-        payload = MsgPayload["/IMU/AHRS"]
+    global OnIMU
+    global IMUpayload
+    if OnIMU:#MsgPayload["/IMU/AHRS"] != {}:
+        payload = IMUpayload# MsgPayload["/IMU/AHRS"]
         global YAW_ANGLE
         global PITCH_ANGLE
         global YAW_OMEGA
@@ -278,7 +345,8 @@ def imuMassageProcess():
         YAW_OMEGA = float(payload["GyroYaw"])
         PITCH_OMEGA = float(payload["GyroPitch"])
         # print("imu updated")
-        MsgPayload["/IMU/AHRS"] = {}
+        # MsgPayload["/IMU/AHRS"] = {}
+        OnIMU = False
     
 
 
@@ -573,8 +641,8 @@ print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
 
-Msg_thread = MsgThread()
-Msg_thread.start()
+# Msg_thread = MsgThread()
+# Msg_thread.start()
 Msg_imu_thread = Msg_imu_Thread()
 Msg_imu_thread.start()
 
