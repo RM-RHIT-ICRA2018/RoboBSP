@@ -44,6 +44,11 @@ SHOTTER_MOTOR_REVERSE = False
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
 PID_Num = len(rob.PID_Items)
 
+YAW_ANGLE = 0.0
+PITCH_ANGLE = 0.0
+YAW_OMEGA = 0.0
+PITCH_OMEGA = 0.0
+
 
 SERIAL_COMM = []
 
@@ -153,6 +158,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/SHOOTER/PUB/#")
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/CONFIG/#")
+    client.subscribe("/IMU/AHRS")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
     t = threading.Thread(target = CAN_RCV_LOOP)
@@ -219,6 +225,17 @@ def on_message(client, userdata, msg):
         ENABLE_Control_From_Decision = payload["CTRL_Decision"]
         ENABLE_Control_From_Remote = payload["CTRL_Remote"]
         ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
+
+
+    elif msg.topic == "/IMU/AHRS":
+        global YAW_ANGLE
+        global PITCH_ANGLE
+        global YAW_OMEGA
+        global PITCH_OMEGA
+        YAW_ANGLE = payload["Yaw"]
+        PITCH_ANGLE = payload["Pitch"]
+        YAW_OMEGA = payload["GyroYaw"]
+        PITCH_OMEGA = payload["GyroPitch"]
 
 
     if msg.topic == "/REMOTE/EXP":
@@ -347,6 +364,13 @@ def CAN_RCV_LOOP():
                         MOTOR_Angle[i] = MOTOR_Now[i]
                         MOTOR_Total[i] = MOTOR_Total[i] + MOTOR_Phi[i]
 
+                        if i == 4:
+                            MOTOR_OMEGA[i] = YAW_OMEGA
+                            MOTOR_Angle[i] = YAW_ANGLE
+                        elif i == 5:
+                            MOTOR_OMEGA[i] = PITCH_OMEGA
+                            MOTOR_Angle[i] = PITCH_ANGLE
+
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
                             MOTOR_UPPER[i].update(MOTOR_OMEGA[i])
@@ -399,7 +423,7 @@ def CAN_RCV_LOOP():
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
                     MOTOR_Updated[i] = True
-                    MOTOR_ANGLE_MSG_OUT[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                    MOTOR_ANGLE_MSG_OUT[i] = MOTOR_Angle[i]
                     MOTOR_SPEED_MSG_OUT[i] = MOTOR_OMEGA[i]
                     MOTOR_TORQUE_MSG_OUT[i] = torque
                     break
@@ -418,7 +442,7 @@ def CAN_RCV_LOOP():
                     prt_trq_msg = " Trq-Msg: "
                     for i in PRINT_RANGE:
                         prt_angle = prt_angle + str(i) + "[" + get_sign(MOTOR_Angle[i]) + ("%04.2f] " % (abs(MOTOR_Angle[i])))
-                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]/10) + ("%04.2f] " % (abs(MOTOR_OMEGA[i]/10)))
+                        prt_spd = prt_spd + str(i) + "[" + get_sign(MOTOR_OMEGA[i]) + ("%04.2f] " % (abs(MOTOR_OMEGA[i])))
                         prt_trq = prt_trq + str(i) + "[" + get_sign(MOTOR_Torque[i]) + ("%04.2f] " % (abs(MOTOR_Torque[i])))
                         prt_up_out = prt_up_out + str(i) + "[" + get_sign(MOTOR_UPPER[i].output) + ("%04d] " % (abs(MOTOR_UPPER[i].output)))
                         prt_low_out = prt_low_out + str(i) + "[" + get_sign(MOTOR_LOWER[i].output) + ("%04d] " % (abs(MOTOR_LOWER[i].output)))
