@@ -518,7 +518,7 @@ def CAN_RCV_LOOP():
                         elif rob.UPPER_PID_TYPE[i] == "FEED":
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
 
-                        if not SKIP_UPPER:
+                        if not SKIP_UPPER[i]:
                             UPPER_OUT[i] = MOTOR_UPPER[i].output
                             if UPPER_OUT[i] > MOTOR_LOWER_RANGES[i]:
                                 UPPER_OUT[i] = MOTOR_LOWER_RANGES[i]
