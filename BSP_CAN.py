@@ -62,8 +62,8 @@ PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Yaw_Lower
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0 ,"D":0.0})       #Pitch_Upper
 PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Pitch_Lower
 
-PID_SETTINGS_SET.append({"P":5.0 ,"I":5, "D":0.02})             #Feeding_Upper
-PID_SETTINGS_SET.append({"P":0.5 ,"I":0.0, "D":0.0})            #Feeding_Lower
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})             #Feeding_Upper
+PID_SETTINGS_SET.append({"P":0.0 ,"I":0.0, "D":0.0})            #Feeding_Lower
 
 PID_SETTINGS_REAL = copy.deepcopy(PID_SETTINGS_SET)
 
