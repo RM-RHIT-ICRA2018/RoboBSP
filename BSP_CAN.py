@@ -96,7 +96,7 @@ MOTOR_UPPER[5].setDegreeFixer(True)
 
 
 MOTOR_LOWER = []
-MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100]
 MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
 MOTOR_LOWER_RANGES = [0,0,0,0,200,200,0]
 
@@ -109,9 +109,9 @@ for i in range(rob.mono):
     MOTOR_LOWER[i].setSampleTime(0.01)
 
 
-SKIP_UPPER = [False,False,False,False,False,False,False]
+SKIP_UPPER = [False,False,False,False,False,False,True]
 
-SKIP_LOWER = [True, True, True, True, False, False, True]
+SKIP_LOWER = [True, True, True, True, False, False, False]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
@@ -505,10 +505,10 @@ def CAN_RCV_LOOP():
 
                         if i == 4:
                             MOTOR_OMEGA[i] = YAW_OMEGA
-                            MOTOR_Angle[i] = YAW_ANGLE
+                            # MOTOR_Angle[i] = YAW_ANGLE
                         elif i == 5:
                             MOTOR_OMEGA[i] = PITCH_OMEGA
-                            MOTOR_Angle[i] = PITCH_ANGLE
+                            # MOTOR_Angle[i] = PITCH_ANGLE
 
 
                         if rob.UPPER_PID_TYPE[i] == "SPD":
