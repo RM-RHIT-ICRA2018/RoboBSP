@@ -485,7 +485,7 @@ def CAN_RCV_LOOP():
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if ((TIME_NOW - MOTOR_TIMER[i] > 0.001)):# and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
+                    if ((TIME_NOW - MOTOR_TIMER[i] > 0.001) or (i in range(4))):# and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
                         # if i == 0: print("yes")
                         
                         MOTOR_Torque[i] = torque
@@ -500,7 +500,7 @@ def CAN_RCV_LOOP():
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
                         if i in range(4):
-                            if TIME_NOW - MOTOR_TIMER[i] > 0.001 and MOTOR_COUNT[i] != 0:
+                            if TIME_NOW - MOTOR_TIMER[i] > 0.01 and MOTOR_COUNT[i] != 0:
                                 MOTOR_AVE[i] = MOTOR_AVE[i]/MOTOR_COUNT[i]
                                 MOTOR_OMEGA[i] = MOTOR_AVE[i]/(TIME_NOW - MOTOR_TIMER[i])
                                 MOTOR_COUNT[i] = 0
