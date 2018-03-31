@@ -500,7 +500,7 @@ def CAN_RCV_LOOP():
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
                         if i in range(4):
-                            if TIME_NOW - MOTOR_TIMER[i] > 0.05 and MOTOR_COUNT[i] != 0:
+                            if TIME_NOW - MOTOR_TIMER[i] > 0.001 and MOTOR_COUNT[i] != 0:
                                 MOTOR_AVE[i] = MOTOR_AVE[i]/MOTOR_COUNT[i]
                                 MOTOR_OMEGA[i] = MOTOR_AVE[i]/(TIME_NOW - MOTOR_TIMER[i])
                                 MOTOR_COUNT[i] = 0
