@@ -111,7 +111,7 @@ for i in range(rob.mono):
 
 SKIP_UPPER = [False,False,False,False,False,False,True]
 
-SKIP_LOWER = [False, False, False, False, False, False, False]
+SKIP_LOWER = [True,True,True,True, False, False, False]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
