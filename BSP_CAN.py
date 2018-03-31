@@ -83,7 +83,7 @@ MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[7])
 
 MOTOR_UPPER = []
 MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
-MOTOR_UPPER_RANGES = [0,0,0,0,360,360,0]
+MOTOR_UPPER_RANGES = [500,500,500,500,360,360,0]
 
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"], MOTOR_UPPER_RANGES[i]))
@@ -97,7 +97,7 @@ MOTOR_UPPER[5].setDegreeFixer(True)
 
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100]
-MOTOR_OUT_LIMIT = [32768, 32768, 32768, 32768, 5000, 5000, 32768]
+MOTOR_OUT_LIMIT = [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 MOTOR_LOWER_RANGES = [0,0,0,0,200,200,0]
 
 for i in MOTOR_OUT_LIMIT:
@@ -481,7 +481,7 @@ def CAN_RCV_LOOP():
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if TIME_NOW - MOTOR_TIMER[i] > 0.001:#phi_count[i] > 10: #reduce the speed of phi
+                    if ((TIME_NOW - MOTOR_TIMER[i] > 0.001) and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
                         MOTOR_Torque[i] = torque
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
                         if init[i]:
