@@ -98,7 +98,7 @@ MOTOR_UPPER[5].setDegreeFixer(True)
 MOTOR_LOWER = []
 MOTOR_LOWER_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100]
 MOTOR_OUT_LIMIT = [5000, 5000, 5000, 5000, 5000, 5000, 5000]
-MOTOR_LOWER_RANGES = [0,0,0,0,200,200,0]
+MOTOR_LOWER_RANGES = [5000,5000,5000,5000,200,200,0]
 
 for i in MOTOR_OUT_LIMIT:
     assert i <= 2**15 # THE MAX ABC_LOWER IS 2**15
@@ -520,7 +520,7 @@ def CAN_RCV_LOOP():
                             MOTOR_UPPER[i].update(MOTOR_Total[i])
 
                         if not SKIP_UPPER[i]:
-                            if i == 0: print("yes")
+                            # if i == 0: print("yes")
                             UPPER_OUT[i] = MOTOR_UPPER[i].output
                             if UPPER_OUT[i] > MOTOR_LOWER_RANGES[i]:
                                 UPPER_OUT[i] = MOTOR_LOWER_RANGES[i]
