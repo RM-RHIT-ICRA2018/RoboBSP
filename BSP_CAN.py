@@ -83,7 +83,7 @@ MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[7])
 
 MOTOR_UPPER = []
 MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
-MOTOR_UPPER_RANGES = [500,500,500,500,360,360,0]
+MOTOR_UPPER_RANGES = [0,0,0,0,360,360,0]
 
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"], MOTOR_UPPER_RANGES[i]))
@@ -111,7 +111,7 @@ for i in range(rob.mono):
 
 SKIP_UPPER = [False,False,False,False,False,False,True]
 
-SKIP_LOWER = [True, True, True, True, False, False, False]
+SKIP_LOWER = [False, False, False, False, False, False, False]
 
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
@@ -558,7 +558,8 @@ def CAN_RCV_LOOP():
 
                     if motor_out[i] > MOTOR_OUT_LIMIT[i]:
                         motor_out[i] = MOTOR_OUT_LIMIT[i] - 1
-                    motor_out[i] = - motor_out[i]
+                    if i in range(4,6):
+                        motor_out[i] = - motor_out[i]
                     if motor_out[i] < 0:
                         motor_out[i] = motor_out[i]+65536
                     MOTOR_Updated[i] = True
