@@ -429,6 +429,8 @@ def CAN_RCV_LOOP():
     MOTOR_Torque = []
     UPPER_OUT = []
     LOWER_OUT = []
+    MOTOR_AVE = []
+    MOTOR_COUNT = []
 
     for i in range(7):
         MOTOR_TIMER.append(time.time())
@@ -446,6 +448,8 @@ def CAN_RCV_LOOP():
         MOTOR_Torque.append(0.0)
         UPPER_OUT.append(0.0)
         LOWER_OUT.append(0.0)
+        MOTOR_AVE.append(0.0)
+        MOTOR_COUNT.append(0)
 
     mqtt_count = 0
     phi_count = [0,0,0,0,0,0,0]
@@ -481,10 +485,12 @@ def CAN_RCV_LOOP():
 
             for i in range(rob.mono):
                 if can_id == MOTOR_ID_HEX[i] :
-                    if ((TIME_NOW - MOTOR_TIMER[i] > 0.001) and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
+                    if ((TIME_NOW - MOTOR_TIMER[i] > 0.001)):# and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
                         # if i == 0: print("yes")
+                        
                         MOTOR_Torque[i] = torque
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
+                            
                         if init[i]:
                             MOTOR_Angle[i] = MOTOR_Now[i]
                             init[i] = False
@@ -493,8 +499,18 @@ def CAN_RCV_LOOP():
                             MOTOR_Phi[i] = MOTOR_Phi[i] - 360
                         elif MOTOR_Phi[i] < -180:
                             MOTOR_Phi[i] = MOTOR_Phi[i] + 360
-
-                        MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
+                        if i in range(4):
+                            if TIME_NOW - MOTOR_TIMER[i] > 0.01 and MOTOR_COUNT[i] != 0:
+                                MOTOR_AVE[i] = MOTOR_AVE[i]/MOTOR_COUNT[i]
+                                MOTOR_OMEGA[i] = MOTOR_AVE[i]/(TIME_NOW - MOTOR_TIMER[i])
+                                MOTOR_COUNT[i] = 0
+                                MOTOR_AVE[i] = 0.0
+                            else:
+                                MOTOR_AVE[i] = MOTOR_AVE[i] + MOTOR_Phi[i]
+                                MOTOR_COUNT[i] = MOTOR_COUNT[i] + 1
+                                break
+                        else:
+                            MOTOR_OMEGA[i] = MOTOR_Phi[i]/(TIME_NOW - MOTOR_TIMER[i])
 
                         # if i in range(4,5):
                             # print(str(TIME_NOW - MOTOR_TIMER[i])+ " " +str(MOTOR_OMEGA[i])+" "+str(MOTOR_Phi[i]*10))
