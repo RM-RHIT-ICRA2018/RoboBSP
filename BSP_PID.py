@@ -84,13 +84,13 @@ class PID:
                 error = error - 360
             elif error < -180:
                 error = error + 360
-        if self.filter > 1: 
-            print("01")
+        # if self.filter > 1: 
+        #     print("01")
         
         if abs(error - self.last_error) < self.filter: 
             return
-        if self.filter > 1: 
-            print("02")
+        # if self.filter > 1: 
+        #     print("02")
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error

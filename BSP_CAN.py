@@ -42,7 +42,7 @@ for i in range(rob.mono):
 SHOTTER_MOTOR_REVERSE = False
 
 version = "01A00B " + time.ctime(os.path.getctime(os.sys.argv[0]))
-PID_Num = len(rob.PID_Items)
+PID_Num = len(rob.PID_Items_BASIC)
 
 YAW_ANGLE = 0.0
 PITCH_ANGLE = 0.0
@@ -111,10 +111,11 @@ for i in range(rob.mono):
     MOTOR_LOWER[i].setSampleTime(0.001)
 
 
-SKIP_UPPER = [False,False,False,False,False,False,True]
+SKIP_UPPER_BEGIN = [False,False,False,False,False,False,True]
+SKIP_UPPER = copy.deepcopy(SKIP_UPPER_BEGIN)
 
-SKIP_LOWER = [True,True,True,True, False, False, False]
-
+SKIP_LOWER_BEGIN = [True,True,True,True, False, False, False]
+SKIP_LOWER = copy.deepcopy(SKIP_LOWER_BEGIN)
 
 print(BSP_ERROR.access("BSP CAN START RUNNING, Version:" + version))
 fmt = "<IB3x8s" #Regex for CAN Protocol
@@ -219,11 +220,17 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/CONFIG/":
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
+        print("config_received")
         for i in range(rob.mono):
-            if Config_Type == "Upper":
+            if Config_Type[i] == "None":
+                SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
+                SKIP_LOWER[i] = SKIP_LOWER_BEGIN[i]
+                MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
+                MOTOR_LOWER[i].SetPoint = MOTOR_LOWER_SetPoints[i]
+            if Config_Type[i] == "Upper":
                 SKIP_UPPER[i] = False
                 MOTOR_UPPER[i].SetPoint = Config_Set[i]
-            elif Config_Type == "Lower":
+            elif Config_Type[i] == "Lower":
                 SKIP_UPPER[i] = True
                 MOTOR_LOWER[i].SetPoint = Config_Set[i]
 
@@ -243,6 +250,12 @@ def on_message(client, userdata, msg):
         ENABLE_Control_From_Decision = payload["CTRL_Decision"]
         ENABLE_Control_From_Remote = payload["CTRL_Remote"]
         ENABLE_Control_From_Shooter = payload["CTRL_Shooter"]
+
+    elif msg.topic == "/REMOTE/RESET_GIMBAL":
+        for i in range(4,6):
+            SKIP_UPPER[i] = False
+            SKIP_LOWER[i] = False
+            MOTOR_UPPER[i].SetPoint = 174.0
 
 
     elif msg.topic == "/REMOTE/EXP":

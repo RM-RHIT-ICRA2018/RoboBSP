@@ -15,10 +15,10 @@ PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Chassis_Phi
 
-PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Yaw
-PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Pitch
+PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Yaw_Image
+PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Pitch_image
 
-PID_NUM = len(PID_SETTINGS_SET)
+PID_NUM = len(rob.PID_Items_ADVANCED)
 
 PID_SETTINGS_REAL = copy.deepcopy(PID_SETTINGS_SET)
 
@@ -71,7 +71,10 @@ def on_message(client, userdata, msg):
         PIDs[1].SetPoint = payload["YSet"]
         PIDs[2].SetPoint = payload["PhiSet"]
 
-    elif msg.topic == "/GIMBAL_SET/":
+    elif msg.topic == "/GIMBAL/SET":
+        if payload["Type"] == "None":
+            for i in range(4,6):
+                CONFIG_TYPE[i] = "None"
         if payload["Type"] == "Angle":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Upper"
@@ -85,8 +88,8 @@ def on_message(client, userdata, msg):
         elif payload["Type"] == "Image":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Lower"
-            PIDs[3].update(payload["Yaw"])
-            PIDs[4].update(payload["Pitch"])
+            PIDs[3].update(payload["dX"])
+            PIDs[4].update(payload["dY"])
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
 
