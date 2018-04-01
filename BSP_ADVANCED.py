@@ -28,7 +28,7 @@ CONFIG_TYPE = [] #[c1,c2,c3,c4,yaw,pitch,feed]
 CONFIG_SET = [] #[c1,c2,c3,c4,yaw,pitch,feed]
 
 for i in range(rob.mono):
-    CONFIG_TYPE.append("Upper")
+    CONFIG_TYPE.append("None")
     CONFIG_SET.append(0.0)
 
 
