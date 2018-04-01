@@ -641,21 +641,23 @@ def CAN_RCV_LOOP():
                 else:
                     printcount = printcount + 1
 
+                try:
+                    CAN_PACK = []
+                    for i in range(4):
+                        CAN_PACK.append(int(int(motor_out[i])/256))
+                        CAN_PACK.append(int(int(motor_out[i])%256))
+                    can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
+                    sock.send(can_pkt)
+                    CAN_PACK = []
+                    for i in range(3):
+                        CAN_PACK.append(int(int(motor_out[i+4])/256))
+                        CAN_PACK.append(int(int(motor_out[i+4])%256))
+                    can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
 
-                CAN_PACK = []
-                for i in range(4):
-                    CAN_PACK.append(int(int(motor_out[i])/256))
-                    CAN_PACK.append(int(int(motor_out[i])%256))
-                can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
-                sock.send(can_pkt)
-                CAN_PACK = []
-                for i in range(3):
-                    CAN_PACK.append(int(int(motor_out[i+4])/256))
-                    CAN_PACK.append(int(int(motor_out[i+4])%256))
-                can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
-
-                #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
-                sock.send(can_pkt)
+                    #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
+                    sock.send(can_pkt)
+                except:
+                    continue
                 if  1:
                     msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES, "Upper": UPPER_OUT, "Lower": LOWER_OUT}
                     #print(BSP_ERROR.info(msg_content))
