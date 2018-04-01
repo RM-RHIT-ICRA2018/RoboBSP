@@ -459,7 +459,10 @@ def CAN_RCV_LOOP():
 
     while 1:
         # print("can loop")
-        can_pkt = sock.recv(16)
+        try:
+            can_pkt = sock.recv(16)
+        except:
+            continue
         can_id, length, data = struct.unpack(fmt, can_pkt)
         can_id &= socket.CAN_EFF_MASK
 
