@@ -42,6 +42,7 @@ class PID:
         self.range = setRange
         self.RTerm = 0.0
         self.degreeFixer = False
+        self.filter = 0.0
 
         self.sample_time = 0.00
         self.current_time = time.time()
@@ -83,7 +84,7 @@ class PID:
                 error = error - 360
             elif error < -180:
                 error = error + 360
-
+        if abs(error - self.last_error) < self.filter: return
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
@@ -161,5 +162,8 @@ class PID:
 
     def setDegreeFixer(self, b):
         self.degreeFixer = b
+    
+    def setFilter(self, f):
+        self.filter = f
 
 

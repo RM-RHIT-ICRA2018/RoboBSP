@@ -93,6 +93,8 @@ for i in range(rob.mono):
 MOTOR_UPPER[4].setDegreeFixer(True)
 MOTOR_UPPER[5].setDegreeFixer(True)
 
+for i in range(4):
+    MOTOR_UPPER[i].setFilter = 1.5
 
 
 MOTOR_LOWER = []
