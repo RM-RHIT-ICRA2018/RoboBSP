@@ -60,8 +60,8 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/")
 
 def on_message(client, userdata, msg):
-    if msg.topic != "/MOTOR/"
-    print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    if msg.topic != "/MOTOR/":
+        print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/REMOTE/":
         PIDs[0].SetPoint = payload["XSpeed"]
