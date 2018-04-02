@@ -185,7 +185,8 @@ def on_message(client, userdata, msg):
     global PITCH_ANGLE
     global YAW_OMEGA
     global PITCH_OMEGA
-    # print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    if msg.topic == "/CONFIG/":
+        print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
     # print(MsgTopic)
 
@@ -220,7 +221,7 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/CONFIG/":
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
-        print("config_received")
+        # print("config_received")
         for i in range(rob.mono):
             if Config_Type[i] == "None":
                 SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
