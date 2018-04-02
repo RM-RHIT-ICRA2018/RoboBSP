@@ -91,8 +91,8 @@ def on_message(client, userdata, msg):
         elif payload["Type"] == "Image":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Lower"
-            PIDs[3].update(payload["dX"])
-            PIDs[4].update(payload["dY"])
+            PIDs[3].update(float(payload["dX"]))
+            PIDs[4].update(float(payload["dY"]))
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
 
