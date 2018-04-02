@@ -107,6 +107,7 @@ def on_message(client, userdata, msg):
         Is = payload.get("Is")
         Ds = payload.get("Ds")
         for i in range(len(rob.PID_Items_BASIC),len(rob.PID_Items_BASIC) + PID_NUM):
+            print(str(Ps[i]))
             PID_SETTINGS_REAL[i]["P"] = Ps[i]
             PID_SETTINGS_REAL[i]["I"] = Is[i]
             PID_SETTINGS_REAL[i]["D"] = Ds[i]
