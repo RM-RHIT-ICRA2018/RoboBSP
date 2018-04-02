@@ -54,7 +54,7 @@ def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
     client.subscribe("/CHASSIS_SET/#")
     client.subscribe("/CHASSIS_STATUS/#")
-    client.subscribe("/GIMBAL_SET/#")
+    client.subscribe("/GIMBAL/SET")
     client.subscribe("/MOTOR/#")
     client.subscribe("/REMOTE/#")
     client.subscribe("/")
