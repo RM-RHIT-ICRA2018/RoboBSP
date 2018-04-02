@@ -106,11 +106,12 @@ def on_message(client, userdata, msg):
         Ps = payload.get("Ps")
         Is = payload.get("Is")
         Ds = payload.get("Ds")
-        for i in range(len(rob.PID_Items_BASIC),len(rob.PID_Items_BASIC) + PID_NUM):
-            print(str(Ps[i]))
-            PID_SETTINGS_REAL[i]["P"] = Ps[i]
-            PID_SETTINGS_REAL[i]["I"] = Is[i]
-            PID_SETTINGS_REAL[i]["D"] = Ds[i]
+        jump = len(rob.PID_Items_BASIC)
+        for i in range(PID_NUM):
+            print(str(Ps[jump + i]))
+            PID_SETTINGS_REAL[i]["P"] = Ps[jump + i]
+            PID_SETTINGS_REAL[i]["I"] = Is[jump + i]
+            PID_SETTINGS_REAL[i]["D"] = Ds[jump + i]
         print(str(PID_SETTINGS_REAL[0]["P"]))
         update_PID()
         publish_real_pid()
