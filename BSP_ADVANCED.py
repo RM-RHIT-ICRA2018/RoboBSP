@@ -116,7 +116,7 @@ def on_message(client, userdata, msg):
         update_PID()
         publish_real_pid()
         for i in range(PID_NUM):
-            print(str(PIDs[i].SetPoint))
+            print(str(PIDs[i].output))
     
     publish_config()
 
