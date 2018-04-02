@@ -231,11 +231,21 @@ def on_message(client, userdata, msg):
                 else:
                     MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
             if Config_Type[i] == "Upper":
+                setpoint = Config_Set[i]
+                if setpoint > MOTOR_UPPER_RANGES[i]:
+                    setpoint = MOTOR_UPPER_RANGES[i]
+                elif setpoint < -MOTOR_UPPER_RANGES[i]:
+                    setpoint = -MOTOR_UPPER_RANGES[i]
                 SKIP_UPPER[i] = False
-                MOTOR_UPPER[i].SetPoint = Config_Set[i]
+                MOTOR_UPPER[i].SetPoint = setpoint
             elif Config_Type[i] == "Lower":
                 SKIP_UPPER[i] = True
-                MOTOR_LOWER[i].SetPoint = Config_Set[i]
+                setpoint = Config_Set[i]
+                if setpoint > MOTOR_LOWER_RANGES[i]:
+                    setpoint = MOTOR_LOWER_RANGES[i]
+                elif setpoint < -MOTOR_LOWER_RANGES[i]:
+                    setpoint = -MOTOR_LOWER_RANGES[i]
+                MOTOR_LOWER[i].SetPoint = setpoint
 
     elif msg.topic == "/SHOOTER/PUB/":
         global PREVIOUS_SHOOT_TIME_COUNT
