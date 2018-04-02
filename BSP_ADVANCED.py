@@ -76,8 +76,8 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "None":
-            for i in range(4,6):
-                CONFIG_TYPE[i] = "None"
+            # for i in range(4,6):
+            #     CONFIG_TYPE[i] = "None"
         if payload["Type"] == "Angle":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Upper"
