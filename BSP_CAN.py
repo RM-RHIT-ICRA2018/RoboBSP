@@ -225,8 +225,10 @@ def on_message(client, userdata, msg):
             if Config_Type[i] == "None":
                 SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
                 SKIP_LOWER[i] = SKIP_LOWER_BEGIN[i]
-                MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
-                MOTOR_LOWER[i].SetPoint = MOTOR_LOWER_SetPoints[i]
+                if SKIP_UPPER[i]:
+                    MOTOR_LOWER[i].SetPoint = MOTOR_LOWER_SetPoints[i]
+                else:
+                    MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
             if Config_Type[i] == "Upper":
                 SKIP_UPPER[i] = False
                 MOTOR_UPPER[i].SetPoint = Config_Set[i]
