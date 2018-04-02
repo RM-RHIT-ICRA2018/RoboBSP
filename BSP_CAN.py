@@ -398,7 +398,7 @@ def publish_real_pid():
         Ds.append(MOTOR_LOWER[3+i].getD())
     agree = compare_pid()
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
-    client.publish("/PID_FEEDBACK/", json.dumps(pid_msg))
+    client.publish("/PID_FEEDBACK/CAN", json.dumps(pid_msg))
 
 class MsgThread(threading.Thread):
     def __init__(self):

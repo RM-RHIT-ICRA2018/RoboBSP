@@ -25,7 +25,8 @@ rob = ROB.robot()
 payloadM = {}
 payloadP = {}
 onMotor = False
-onPID = False
+onPIDCan = False
+onPIDAdv = False
 
 
 rob.mono = 8
@@ -156,8 +157,11 @@ def on_message(client, userdata, msg):
         onMotor = True
         payloadM = json.loads(msg.payload.decode())
         
-    elif msg.topic == "/PID_FEEDBACK/":
-        onPID = True
+    elif msg.topic == "/PID_FEEDBACK/CAN":
+        onPIDCan = True
+        payloadP = json.loads(msg.payload.decode())
+    elif msg.topic == "/PID_FEEDBACK/ADVANCED":
+        onPIDAdv = True
         payloadP = json.loads(msg.payload.decode())
         
 def massageProcess():
@@ -192,7 +196,7 @@ def massageProcess():
 
         updateMotorToGUI()
         onMotor = False
-    if onPID:
+    if onPIDCan:
         PIDs = []
         PIDs.append(payloadP.get("Ps"))
         PIDs.append(payloadP.get("Is"))
@@ -219,7 +223,37 @@ def massageProcess():
             warning_labels[1].config(text="PID Settings Updated",background='#0f0')
         else:
             warning_labels[1].config(text="PID Settings Not Updated",background='#f00')
-        onPID = False
+        onPIDCan = False
+    if onPIDAdv:
+        PIDs = []
+        PIDs.append(payloadP.get("Ps"))
+        PIDs.append(payloadP.get("Is"))
+        PIDs.append(payloadP.get("Ds"))
+        agree = payloadP.get("Agree")
+        if agree == "True":
+            warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
+        else:
+            warning_labels[0].config(text="PID Settings Disagree",background='#f00')
+        udd = True
+        for i in range(3):
+            PID_feedback[i] = PIDs[i]
+            for j in range(len(PID_feedback[i])):
+                k = len(rob.PID_Items_BASIC) + j
+                if PID_feedback[i][j] != float(pid_labels[i][k].cget("text")):
+                    if init[i][k]:
+                        PID_set[i][k] = float(PID_feedback[i][j])
+                        pid_text = "%04.2f" % (float(PID_feedback[i][j]))
+                        pid_labels[i][k].config(text=pid_text)
+                        init[i][k] = False
+                    else:
+                        udd = False
+                        break
+        if udd:
+            warning_labels[1].config(text="PID Settings Updated",background='#0f0')
+        else:
+            warning_labels[1].config(text="PID Settings Not Updated",background='#f00')
+        onPIDCan = False
+
 
 
 
@@ -546,22 +580,22 @@ def main():
 
     graph_frame.grid(column=1,row=0)    
 
-    PID_frame = ttk.Labelframe(root, padding=5, text="PID Adjustment")
+    PID_frame = ttk.Labelframe(root, padding=0, text="PID Adjustment")
 
     warning_label_0 = ttk.Label(PID_frame,text="All PID Settings Agree",background='#0f0')
-    warning_label_0.grid()
+    warning_label_0.grid(column=0, row=0)
     warning_labels.append(warning_label_0)
 
     warning_label_1 = ttk.Label(PID_frame,text="PID Settings Updated",background='#0f0')
-    warning_label_1.grid()
+    warning_label_1.grid(column=0, row=1)
     warning_labels.append(warning_label_1)
 
     p_i_d = ["P:","I:","D:"]
 
     for i in range(len(rob.PID_Items)):
-        pid_frame = ttk.Labelframe(PID_frame,padding=1,text=rob.PID_Items[i])
+        pid_frame = ttk.Labelframe(PID_frame,padding=0,text=rob.PID_Items[i])
         for j in range(3):
-            p_i_d_frame = ttk.Labelframe(pid_frame,padding=1,text=p_i_d[j])
+            p_i_d_frame = ttk.Labelframe(pid_frame,padding=0,text=p_i_d[j])
             p_i_d_label = ttk.Label(p_i_d_frame,text="000")
             pid_labels[j].append(p_i_d_label)
             p_i_d_label.grid()
@@ -569,15 +603,15 @@ def main():
             pid_entrys[j].append(p_i_d_entry)
             p_i_d_entry.grid()
             p_i_d_frame.grid(column=j,row=0)
-        pid_frame.grid()
+        pid_frame.grid(column=1, row=i)
 
     clear_button = ttk.Button(PID_frame, width=20, text='Update PID Settings')
     clear_button['command'] = (lambda: updatePID())
-    clear_button.grid()
+    clear_button.grid(column=0, row=2)
 
 
-
-
+    for i in range(len(rob.PID_Items)):
+        PID_frame.rowconfigure(i, weight=1)
     PID_frame.grid(column=3,row=0)
     
     

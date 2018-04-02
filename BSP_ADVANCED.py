@@ -18,6 +18,7 @@ PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Chassis_Phi
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Yaw_Image
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Pitch_image
 
+
 PID_NUM = len(rob.PID_Items_ADVANCED)
 
 PID_SETTINGS_REAL = copy.deepcopy(PID_SETTINGS_SET)
@@ -98,8 +99,39 @@ def on_message(client, userdata, msg):
         PIDs[1].update(payload["YSpeed"])
         PIDs[2].update(payload["PhiSpeed"])
         chassis_output()
+
+    elif msg.topic == "/PID_REMOTE/":
+        Ps = payload.get("Ps")
+        Is = payload.get("Is")
+        Ds = payload.get("Ds")
+        for i in range(len(rob.PID_Items_BASIC),len(rob.PID_Items_BASIC) + PID_Num):
+            PID_SETTINGS_REAL[i]["P"] = Ps[i]
+            PID_SETTINGS_REAL[i]["I"] = Is[i]
+            PID_SETTINGS_REAL[i]["D"] = Ds[i]
+        print(str(PID_SETTINGS_REAL[0]["P"]))
+        update_PID()
+        publish_real_pid()
     
     publish_config()
+
+def compare_pid():
+    for i in range(int(PID_NUM)):
+        if PID_SETTINGS_REAL[i]["P"] != PID_SETTINGS_SET[i]["P"] or PID_SETTINGS_REAL[i]["I"] != PID_SETTINGS_SET[i]["I"] or PID_SETTINGS_REAL[i]["D"] != PID_SETTINGS_SET[i]["D"]:
+            return "False"
+    return "True"
+
+def publish_real_pid():
+    #pdb.set_trace()
+    Ps = []
+    Is = []
+    Ds = []
+    for i in range(int(PID_NUM)):
+        Ps.append(PID[i].getP())
+        Is.append(PID[i].getI())
+        Ds.append(PID[i].getD())
+    agree = compare_pid()
+    pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
+    client.publish("/PID_FEEDBACK/ADVANCED", json.dumps(pid_msg))
 
 def chassis_output():
     X_OUT = PIDs[0].output
