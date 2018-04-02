@@ -57,6 +57,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/GIMBAL/SET")
     client.subscribe("/MOTOR/#")
     client.subscribe("/REMOTE/#")
+    client.subscribe("/PID_REMOTE/#")
     client.subscribe("/")
 
 def on_message(client, userdata, msg):
@@ -105,7 +106,7 @@ def on_message(client, userdata, msg):
         Ps = payload.get("Ps")
         Is = payload.get("Is")
         Ds = payload.get("Ds")
-        for i in range(len(rob.PID_Items_BASIC),len(rob.PID_Items_BASIC) + PID_Num):
+        for i in range(len(rob.PID_Items_BASIC),len(rob.PID_Items_BASIC) + PID_NUM):
             PID_SETTINGS_REAL[i]["P"] = Ps[i]
             PID_SETTINGS_REAL[i]["I"] = Is[i]
             PID_SETTINGS_REAL[i]["D"] = Ds[i]
@@ -127,9 +128,9 @@ def publish_real_pid():
     Is = []
     Ds = []
     for i in range(int(PID_NUM)):
-        Ps.append(PID[i].getP())
-        Is.append(PID[i].getI())
-        Ds.append(PID[i].getD())
+        Ps.append(PIDs[i].getP())
+        Is.append(PIDs[i].getI())
+        Ds.append(PIDs[i].getD())
     agree = compare_pid()
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
     client.publish("/PID_FEEDBACK/ADVANCED", json.dumps(pid_msg))
