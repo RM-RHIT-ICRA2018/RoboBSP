@@ -28,9 +28,15 @@ PIDs = []
 CONFIG_TYPE = [] #[c1,c2,c3,c4,yaw,pitch,feed]
 CONFIG_SET = [] #[c1,c2,c3,c4,yaw,pitch,feed]
 
+DATA_COLLECT = []
+
+adv_updated_origin = [True, False]
+adv_updated_real = copy.deepcopy(adv_updated_origin)
+
 for i in range(rob.mono):
     CONFIG_TYPE.append("None")
     CONFIG_SET.append(0.0)
+    DATA_COLLECT.append(0.0)
 
 
 PID_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -76,9 +82,9 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "None":
-            pass
-            # for i in range(4,6):
-            #     CONFIG_TYPE[i] = "None"
+            # pass
+            for i in range(4,6):
+                CONFIG_TYPE[i] = "None"
         if payload["Type"] == "Angle":
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Upper"
@@ -95,9 +101,13 @@ def on_message(client, userdata, msg):
                 CONFIG_TYPE[i] = "Lower"
             PIDs[3].update(payload["dX"])
             PIDs[4].update(payload["dY"])
-            print(str(PIDs[3].output))
+            # print(str(PIDs[3].output))
+            DATA_COLLECT[4] = payload["dX"]
+            DATA_COLLECT[5] = payload["dY"]
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
+            adv_updated_real[1] = True
+
 
     elif msg.topic == "/CHASSIS_STATUS/":
         PIDs[0].update(payload["XSpeed"])
@@ -150,6 +160,22 @@ def chassis_output():
     for i in range(4):
         CONFIG_SET[i] = Chassis_OUT[i]
 
+def publishAdv():
+    global adv_updated_real
+    global adv_updated_origin
+    if False not in adv_updated_real:
+        client.publish("/ADVANCE/", json.dumps({"Data": DATA_COLLECT, "Advance": CONFIG_SET}))
+        adv_updated_real = copy.deepcopy(adv_updated_origin)
+
+
+class PubThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            publishAdv()
+
 
 
 client = mqtt.Client()
@@ -159,6 +185,10 @@ client.on_message = on_message
 print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
+
+Pub_thread = PubThread()
+Pub_thread.start()
+
 client.loop_forever()
         
         
