@@ -54,7 +54,7 @@ def update_PID():
         PIDs[i].setKd(PID_SETTINGS_REAL[i]["D"])
 
 def publish_config():
-    client.publish("/CONFIG/", json.dumps({"Type": CONFIG_TYPE, "Set": CONFIG_SET}))
+    client.publish("/CONFIG/", json.dumps({"Type": CONFIG_TYPE, "Set": CONFIG_SET, "PassData": DATA_COLLECT}))
 
 def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))

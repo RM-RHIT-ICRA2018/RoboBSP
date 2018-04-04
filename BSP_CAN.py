@@ -36,8 +36,12 @@ FEEDER_REV_TURN = -600
 PREVIOUS_SHOOT_TIME_COUNT = 0
 
 init = []
+Passed_Data = []
+Adv_Out = []
 for i in range(rob.mono):
     init.append(True)
+    Passed_Data.append(0.0)
+    Adv_Out.append(0.0)
 
 SHOTTER_MOTOR_REVERSE = False
 
@@ -219,8 +223,12 @@ def on_message(client, userdata, msg):
         publish_real_pid()
 
     elif msg.topic == "/CONFIG/":
+        global Passed_Data
+        global Adv_Out
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
+        Adv_Out = payload["Set"]
+        Passed_Data = payload["PassData"]
         # print("config_received")
         for i in range(rob.mono):
             if Config_Type[i] == "None":
@@ -688,7 +696,7 @@ def CAN_RCV_LOOP():
                 except:
                     continue
                 if  1:
-                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES, "Upper": UPPER_OUT, "Lower": LOWER_OUT}
+                    msg_content = {"Type": "MotorFeedback","Angle" : MOTOR_ANGLE_MSG_OUT, "Speed" : MOTOR_SPEED_MSG_OUT, "Torque" : MOTOR_TORQUE_MSG_OUT, "ID" : MOTOR_ID_DES, "Upper": UPPER_OUT, "Lower": LOWER_OUT, "AdvData": Passed_Data, "AdvOut": Adv_Out}
                     #print(BSP_ERROR.info(msg_content))
                     client.publish("/MOTOR/", json.dumps(msg_content))
                     publish_real_pid()

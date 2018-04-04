@@ -189,6 +189,7 @@ def massageProcess():
     global payloadA
     global payloadM
     global payloadP
+    global motorID
     # print("thread")
     if onMotor:
         # print("onMotor")
@@ -196,9 +197,11 @@ def massageProcess():
         speedIn = payloadM.get("Speed")
         angleIn = payloadM.get("Angle")
         torqueIn = payloadM.get("Torque")
+        dataIn = payloadA.get("AdvData")
+        advanceIn = payloadA.get("AdvOut")
         upperIn = payloadM.get("Upper")
         lowerIn = payloadM.get("Lower")
-        for i in motorID:
+        for i in range(len(speedIn)):
             data.set('motorSpeeds', i, speedIn[i])
             data.set('motorAngles', i, angleIn[i])
             data.set('motorTorques', i, torqueIn[i])
@@ -209,6 +212,10 @@ def massageProcess():
                 AngleList[i].append(angleIn[i])
                 TorqueList[i].remove(TorqueList[i][0])
                 TorqueList[i].append(torqueIn[i])
+                DataList[i].remove(DataList[i][0])
+                DataList[i].append(dataIn[i])
+                AdvanceList[i].remove(AdvanceList[i][0])
+                AdvanceList[i].append(advanceIn[i])
                 UpperList[i].remove(UpperList[i][0])
                 UpperList[i].append(upperIn[i])
                 LowerList[i].remove(LowerList[i][0])
@@ -217,9 +224,10 @@ def massageProcess():
         updateMotorToGUI()
         onMotor = False
     if onAdv:
+        # print("onadv")
         dataIn = payloadA.get("Data")
         advanceIn = payloadA.get("Advance")
-        for i in motorID:
+        for i in range(len(dataIn)):
             if UpdatingGraph:
                 DataList[i].remove(DataList[i][0])
                 DataList[i].append(dataIn[i])
