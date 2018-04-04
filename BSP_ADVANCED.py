@@ -61,7 +61,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/CHASSIS_SET/#")
     client.subscribe("/CHASSIS_STATUS/#")
     client.subscribe("/GIMBAL/SET")
-    client.subscribe("/MOTOR/#")
+    # client.subscribe("/MOTOR/#")
     client.subscribe("/REMOTE/#")
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/")
@@ -106,7 +106,7 @@ def on_message(client, userdata, msg):
             DATA_COLLECT[5] = payload["dY"]
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
-            adv_updated_real[1] = True
+            # adv_updated_real[1] = True
 
 
     elif msg.topic == "/CHASSIS_STATUS/":
@@ -160,21 +160,21 @@ def chassis_output():
     for i in range(4):
         CONFIG_SET[i] = Chassis_OUT[i]
 
-def publishAdv():
-    global adv_updated_real
-    global adv_updated_origin
-    if False not in adv_updated_real:
-        client.publish("/ADVANCE/", json.dumps({"Data": DATA_COLLECT, "Advance": CONFIG_SET}))
-        adv_updated_real = copy.deepcopy(adv_updated_origin)
+# def publishAdv():
+#     global adv_updated_real
+#     global adv_updated_origin
+#     if False not in adv_updated_real:
+#         client.publish("/ADVANCE/", json.dumps({"Data": DATA_COLLECT, "Advance": CONFIG_SET}))
+#         adv_updated_real = copy.deepcopy(adv_updated_origin)
 
 
-class PubThread(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
+# class PubThread(threading.Thread):
+#     def __init__(self):
+#         threading.Thread.__init__(self)
 
-    def run(self):
-        while 1:
-            publishAdv()
+#     def run(self):
+#         while 1:
+#             publishAdv()
 
 
 
@@ -186,8 +186,8 @@ print(BSP_ERROR.info("MQTT Interface Start Binding."))
 
 client.connect("127.0.0.1", 1883, 60)
 
-Pub_thread = PubThread()
-Pub_thread.start()
+# Pub_thread = PubThread()
+# Pub_thread.start()
 
 client.loop_forever()
         

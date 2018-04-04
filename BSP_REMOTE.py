@@ -197,8 +197,8 @@ def massageProcess():
         speedIn = payloadM.get("Speed")
         angleIn = payloadM.get("Angle")
         torqueIn = payloadM.get("Torque")
-        dataIn = payloadA.get("AdvData")
-        advanceIn = payloadA.get("AdvOut")
+        dataIn = payloadM.get("AdvData")
+        advanceIn = payloadM.get("AdvOut")
         upperIn = payloadM.get("Upper")
         lowerIn = payloadM.get("Lower")
         for i in range(len(speedIn)):
