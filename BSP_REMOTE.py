@@ -24,6 +24,8 @@ rob = ROB.robot()
 
 payloadM = {}
 payloadP = {}
+payloadA = {}
+onAdv = False
 onMotor = False
 onPIDCan = False
 onPIDAdv = False
@@ -67,16 +69,20 @@ for i in range(3):
         PID_set[i].append(0.0)
     
 
-fig = Figure(figsize=(10,8), dpi=100)
-ani_spd = fig.add_subplot(5,1,1)
+fig = Figure(figsize=(10,10), dpi=100)
+ani_spd = fig.add_subplot(7,1,1)
 ani_spd.set_title("Speed")
-ani_ang = fig.add_subplot(5,1,2)
+ani_ang = fig.add_subplot(7,1,2)
 ani_ang.set_title("Angle")
-ani_trq = fig.add_subplot(5,1,3)
+ani_trq = fig.add_subplot(7,1,3)
 ani_trq.set_title("Torque")
-ani_up = fig.add_subplot(5,1,4)
+ani_dt = fig.add_subplot(7,1,4)
+ani_dt.set_title("Data")
+ani_adv = fig.add_subplot(7,1,5)
+ani_adv.set_title("Advance")
+ani_up = fig.add_subplot(7,1,6)
 ani_up.set_title("Upper")
-ani_low = fig.add_subplot(5,1,5)
+ani_low = fig.add_subplot(7,1,7)
 ani_low.set_title("Lower")
 
 
@@ -84,6 +90,8 @@ ani_low.set_title("Lower")
 SpeedList = []
 AngleList = []
 TorqueList = []
+DataList = []
+AdvanceList = []
 UpperList = []
 LowerList = []
 
@@ -94,6 +102,8 @@ for i in range(rob.mono):
     SpeedList.append([0] * 200)
     AngleList.append([0] * 200)
     TorqueList.append([0] * 200)
+    DataList.append([0] * 200)
+    AdvanceList.append([0] * 200)
     UpperList.append([0] * 200)
     LowerList.append([0] * 200)
 
@@ -150,12 +160,19 @@ def on_connect(client, userdata, flags, rc):
     
 def on_message(client, userdata, msg):
     global onMotor
-    global onPID
+    global onPIDCan
+    global onPIDAdv
+    global onAdv
+    global payloadA
     global payloadM
     global payloadP
+    
     if msg.topic == "/MOTOR/":
         onMotor = True
         payloadM = json.loads(msg.payload.decode())
+    elif msg.topic == "/ADVANCE/":
+        onAdv = True
+        payloadA = json.loads(msg.payload.decode())
         
     elif msg.topic == "/PID_FEEDBACK/CAN":
         onPIDCan = True
@@ -166,7 +183,10 @@ def on_message(client, userdata, msg):
         
 def massageProcess():
     global onMotor
-    global onPID
+    global onPIDCan
+    global onPIDAdv
+    global onAdv
+    global payloadA
     global payloadM
     global payloadP
     # print("thread")
@@ -196,6 +216,17 @@ def massageProcess():
 
         updateMotorToGUI()
         onMotor = False
+    if onAdv:
+        dataIn = payloadA.get("Data")
+        advanceIn = payloadA.get("Advance")
+        for i in motorID:
+            if UpdatingGraph:
+                DataList[i].remove(DataList[i][0])
+                DataList[i].append(dataIn[i])
+                AdvanceList[i].remove(AdvanceList[i][0])
+                AdvanceList[i].append(advanceIn[i])
+        onAdv = False
+
     if onPIDCan:
         PIDs = []
         PIDs.append(payloadP.get("Ps"))
@@ -305,6 +336,8 @@ def update_graph(i):
         ani_ang.clear()
         ani_spd.clear()
         ani_trq.clear()
+        ani_dt.clear()
+        ani_adv.clear()
         ani_up.clear()
         ani_low.clear()
         #print(""+str(SpeedList[5][99]))
@@ -315,6 +348,10 @@ def update_graph(i):
         ani_ang.plot(XList,YListA)
         YListT = TorqueList[data.graph_motor]
         ani_trq.plot(XList,YListT)
+        YListD = DataList[data.graph_motor]
+        ani_dt.plot(XList, YListD)
+        YListV = AdvanceList[data.graph_motor]
+        ani_adv.plot(XList, YListV)
         YListU = UpperList[data.graph_motor]
         ani_up.plot(XList,YListU)
         YListL = LowerList[data.graph_motor]
@@ -323,6 +360,8 @@ def update_graph(i):
         ani_spd.set_title("Speed")
         ani_ang.set_title("Angle")
         ani_trq.set_title("Torque")
+        ani_dt.set_title("Data")
+        ani_adv.set_title("Advance")
         ani_up.set_title("Upper")
         ani_low.set_title("Lower")
 
@@ -333,6 +372,8 @@ def clearGraph():
     SpeedList.clear()
     AngleList.clear()
     TorqueList.clear()
+    DataList.clear()
+    AdvanceList.clear()
     UpperList.clear()
     LowerList.clear()
 
@@ -340,6 +381,8 @@ def clearGraph():
         SpeedList.append([0] * 200)
         AngleList.append([0] * 200)
         TorqueList.append([0] * 200)
+        DataList.append([0] * 200)
+        AdvanceList.append([0] * 200)
         UpperList.append([0] * 200)
         LowerList.append([0] * 200)
     # print(" "+str(SpeedList[5][99]))
@@ -400,9 +443,10 @@ def main():
     
     # GUI setup
 
-    root = tkinter.Tk()
+    root01 = tkinter.Tk()
+    root02 = tkinter.Tk()
 
-    left_frame = ttk.Frame(root, padding = 5)
+    left_frame = ttk.Frame(root01, padding = 5)
     
     monitor_frame = ttk.Labelframe(left_frame, padding=10, text='Status Monitor')
     
@@ -548,15 +592,11 @@ def main():
 
     left_frame.grid(column=0,row=0)
 
-    graph_frame = ttk.Labelframe(root, padding=2, text="Real-time Graphics")
-
-    # ani_spd.plot(XList,YListS)
-    # ani_ang.plot(XList,YListA)
-    # ani_trq.plot(XList,YListT)
+    graph_frame = ttk.Labelframe(root01, padding=2, text="Real-time Graphics")
 
     canvas = FigureCanvasTkAgg(fig, graph_frame)
     canvas.show()
-    canvas.get_tk_widget().grid()
+    canvas.get_tk_widget().grid(column=0, row=0)
 
     motor_radio_frame = ttk.Labelframe(graph_frame,padding=3,text="motor")
 
@@ -566,21 +606,22 @@ def main():
         motor_radios.append(ttk.Radiobutton(motor_radio_frame, text=('m'+str(i)), value=i))
         motor_radios[i]['variable'] = motor_radio_observer
         motor_radios[i]['command'] = lambda: motor_slection(motor_radio_observer)
-        motor_radios[i].grid(column=i, row=0)
-    
-    motor_radio_frame.grid()
+        motor_radios[i].grid()
 
-    freeze_button = ttk.Button(graph_frame, width=20, text='Freeze Graph')
+    freeze_button = ttk.Button(motor_radio_frame, width=20, text='Freeze Graph')
     freeze_button['command'] = (lambda: freezeGraph(freeze_button))
     freeze_button.grid()
 
-    clear_button = ttk.Button(graph_frame, width=20, text='Clear Graph')
+    clear_button = ttk.Button(motor_radio_frame, width=20, text='Clear Graph')
     clear_button['command'] = (lambda: clearGraph())
     clear_button.grid()
 
+    
+    motor_radio_frame.grid(column=1, row=0)
+
     graph_frame.grid(column=1,row=0)    
 
-    PID_frame = ttk.Labelframe(root, padding=0, text="PID Adjustment")
+    PID_frame = ttk.Labelframe(root02, padding=0, text="PID Adjustment")
 
     warning_label_0 = ttk.Label(PID_frame,text="All PID Settings Agree",background='#0f0')
     warning_label_0.grid(column=0, row=0)
@@ -601,9 +642,12 @@ def main():
             p_i_d_label.grid()
             p_i_d_entry = ttk.Entry(p_i_d_frame)
             pid_entrys[j].append(p_i_d_entry)
-            p_i_d_entry.grid()
+            p_i_d_entry.grid()              
             p_i_d_frame.grid(column=j,row=0)
-        pid_frame.grid(column=1, row=i)
+        if i < 8:
+            pid_frame.grid(column=1, row=i)
+        elif i < 16:
+            pid_frame.grid(column=2, row=i-8)
 
     clear_button = ttk.Button(PID_frame, width=20, text='Update PID Settings')
     clear_button['command'] = (lambda: updatePID())
@@ -612,38 +656,40 @@ def main():
 
     for i in range(len(rob.PID_Items)):
         PID_frame.rowconfigure(i, weight=1)
-    PID_frame.grid(column=3,row=0)
+    PID_frame.grid(column=0,row=0)
     
     
     
-    root.bind_all('<KeyPress-w>', lambda event: control_key_pressed(0))
-    root.bind_all('<KeyPress-a>', lambda event: control_key_pressed(1))
-    root.bind_all('<KeyPress-s>', lambda event: control_key_pressed(2))
-    root.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
-    root.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
-    root.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
-    root.bind_all('<KeyPress-Up>', lambda event: control_key_pressed(6))    
-    root.bind_all('<KeyPress-Down>', lambda event: control_key_pressed(7))
-    root.bind_all('<KeyPress-Left>', lambda event: control_key_pressed(8))
-    root.bind_all('<KeyPress-Right>', lambda event: control_key_pressed(9))
+    root01.bind_all('<KeyPress-w>', lambda event: control_key_pressed(0))
+    root01.bind_all('<KeyPress-a>', lambda event: control_key_pressed(1))
+    root01.bind_all('<KeyPress-s>', lambda event: control_key_pressed(2))
+    root01.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
+    root01.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
+    root01.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
+    root01.bind_all('<KeyPress-Up>', lambda event: control_key_pressed(6))    
+    root01.bind_all('<KeyPress-Down>', lambda event: control_key_pressed(7))
+    root01.bind_all('<KeyPress-Left>', lambda event: control_key_pressed(8))
+    root01.bind_all('<KeyPress-Right>', lambda event: control_key_pressed(9))
     
-    root.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
-    root.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
-    root.bind_all('<KeyRelease-s>', lambda event: control_key_released(2))
-    root.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
-    root.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
-    root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
-    root.bind_all('<KeyRelease-Up>', lambda event: control_key_released(6))    
-    root.bind_all('<KeyRelease-Down>', lambda event: control_key_released(7))
-    root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
-    root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
+    root01.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
+    root01.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
+    root01.bind_all('<KeyRelease-s>', lambda event: control_key_released(2))
+    root01.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
+    root01.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
+    root01.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
+    root01.bind_all('<KeyRelease-Up>', lambda event: control_key_released(6))    
+    root01.bind_all('<KeyRelease-Down>', lambda event: control_key_released(7))
+    root01.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
+    root01.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
     
+    global ani
     ani = animation.FuncAnimation(fig, update_graph, interval=5000)
     
     Msg_thread = MsgThread()
     Msg_thread.start()
 
-    root.mainloop()
+    root01.mainloop()
+    root02.mainloop()
     
     
     
