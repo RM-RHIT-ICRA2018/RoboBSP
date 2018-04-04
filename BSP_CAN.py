@@ -224,13 +224,15 @@ def on_message(client, userdata, msg):
         # print("config_received")
         for i in range(rob.mono):
             if Config_Type[i] == "None":
-                SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
-                SKIP_LOWER[i] = SKIP_LOWER_BEGIN[i]
+                # SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
+                # SKIP_LOWER[i] = SKIP_LOWER_BEGIN[i]
                 if SKIP_UPPER[i]:
                     MOTOR_LOWER[i].SetPoint = 0.0
                 else:
                     if rob.UPPER_PID_TYPE != "ANG":
                         MOTOR_UPPER[i].SetPoint = 0.0
+                    else:
+                        MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
             if Config_Type[i] == "Upper":
                 setpoint = Config_Set[i]
                 if setpoint > MOTOR_UPPER_RANGES[i]:
