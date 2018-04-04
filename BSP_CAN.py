@@ -229,7 +229,7 @@ def on_message(client, userdata, msg):
                 if SKIP_UPPER[i]:
                     MOTOR_LOWER[i].SetPoint = 0.0
                 else:
-                    if rob.UPPER_PID_TYPE != "ANG"
+                    if rob.UPPER_PID_TYPE != "ANG":
                         MOTOR_UPPER[i].SetPoint = 0.0
             if Config_Type[i] == "Upper":
                 setpoint = Config_Set[i]
