@@ -227,7 +227,6 @@ def on_message(client, userdata, msg):
         global Adv_Out
         Config_Type = payload["Type"]
         Config_Set = payload["Set"]
-        Adv_Out = payload["Set"]
         Passed_Data = payload["PassData"]
         # print("config_received")
         for i in range(rob.mono):
@@ -242,21 +241,20 @@ def on_message(client, userdata, msg):
                     else:
                         MOTOR_UPPER[i].SetPoint = MOTOR_UPPER_SetPoints[i]
             elif Config_Type[i] == "Upper":
-                setpoint = Config_Set[i]
-                if setpoint > MOTOR_UPPER_RANGES[i]:
-                    setpoint = MOTOR_UPPER_RANGES[i]
-                elif setpoint < -MOTOR_UPPER_RANGES[i]:
-                    setpoint = -MOTOR_UPPER_RANGES[i]
+                if Config_Set[i] > MOTOR_UPPER_RANGES[i]:
+                    Config_Set[i] = MOTOR_UPPER_RANGES[i]
+                elif Config_Set[i] < -MOTOR_UPPER_RANGES[i]:
+                    Config_Set[i] = -MOTOR_UPPER_RANGES[i]
                 SKIP_UPPER[i] = False
-                MOTOR_UPPER[i].SetPoint = setpoint
+                MOTOR_UPPER[i].SetPoint = Config_Set[i]
             elif Config_Type[i] == "Lower":
                 SKIP_UPPER[i] = True
-                setpoint = Config_Set[i]
-                if setpoint > MOTOR_LOWER_RANGES[i]:
-                    setpoint = MOTOR_LOWER_RANGES[i]
-                elif setpoint < -MOTOR_LOWER_RANGES[i]:
-                    setpoint = -MOTOR_LOWER_RANGES[i]
-                MOTOR_LOWER[i].SetPoint = setpoint
+                if Config_Set[i] > MOTOR_LOWER_RANGES[i]:
+                    Config_Set[i] = MOTOR_LOWER_RANGES[i]
+                elif Config_Set[i] < -MOTOR_LOWER_RANGES[i]:
+                    Config_Set[i] = -MOTOR_LOWER_RANGES[i]
+                MOTOR_LOWER[i].SetPoint = Config_Set[i]
+        Adv_Out = Config_Set
 
     elif msg.topic == "/SHOOTER/PUB/":
         global PREVIOUS_SHOOT_TIME_COUNT
