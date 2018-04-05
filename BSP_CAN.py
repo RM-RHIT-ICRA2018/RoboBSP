@@ -114,6 +114,8 @@ for i in range(rob.mono):
     MOTOR_LOWER[i].SetPoint=MOTOR_LOWER_SetPoints[i]
     MOTOR_LOWER[i].setSampleTime(0.001)
 
+MOTOR_LOWER[5].setBase(1500)
+
 
 SKIP_UPPER_BEGIN = [False,False,False,False,False,False,True]
 SKIP_UPPER = copy.deepcopy(SKIP_UPPER_BEGIN)

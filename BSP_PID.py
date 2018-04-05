@@ -43,6 +43,7 @@ class PID:
         self.RTerm = 0.0
         self.degreeFixer = False
         self.filter = 0.0
+        self.base = 0.0
 
         self.sample_time = 0.00
         self.current_time = time.time()
@@ -125,7 +126,7 @@ class PID:
 
         self.last_error = error
 
-        self.output = self.PTerm + (self.Ki * self.ITerm) + (self.Kd * self.DTerm)
+        self.output = self.PTerm + (self.Ki * self.ITerm) + (self.Kd * self.DTerm) + self.base
 
     def setKp(self, proportional_gain):
         """Determines how aggressively the PID reacts to the current error with setting Proportional Gain"""
@@ -171,5 +172,8 @@ class PID:
     
     def setFilter(self, f):
         self.filter = f
+
+    def setBase(self, b):
+        self.base = b
 
 
