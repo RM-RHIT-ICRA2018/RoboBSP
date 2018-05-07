@@ -61,6 +61,8 @@ for i in range(3):
 
 warning_labels = []
 
+CHASSIS_ACCELERATE = 1
+
 PID_feedback = [[],[],[]]
 PID_set = [[],[],[]]
 for i in range(3):
@@ -306,7 +308,7 @@ def publishPID():
 
 
 def publishControl():
-    client.publish("/REMOTE/", json.dumps({"XSpeed": CHASSIS_X, "YSpeed": CHASSIS_Y, "PhiSpeed": CHASSIS_PHI, "Pitch":PITCH_MOVE, "Yaw": YAW_MOVE, "YawAngle": YAW_SET, "PitchAngle": PITCH_SET}))
+    client.publish("/REMOTE/", json.dumps({"XSpeed": CHASSIS_X*CHASSIS_ACCELERATE, "YSpeed": CHASSIS_Y*CHASSIS_ACCELERATE, "PhiSpeed": CHASSIS_PHI*CHASSIS_ACCELERATE, "Pitch":PITCH_MOVE, "Yaw": YAW_MOVE, "YawAngle": YAW_SET, "PitchAngle": PITCH_SET}))
 
     
     
@@ -321,6 +323,7 @@ def updateKeyChassisControl():
     CHASSIS_PHI = keys[5] - keys[4]
     PITCH_MOVE = keys[6] - keys[7]
     YAW_MOVE = keys[8] - keys[9]
+    CHASSIS_ACCELERATE = 1 + keys[10]
     print('x: ' + str(CHASSIS_X) + ' y: ' + str(CHASSIS_Y) + ' phi: ' +str(CHASSIS_PHI) + ' pitch: ' + str(PITCH_MOVE) + ' yaw: ' + str(YAW_MOVE))
     publishControl()
     
@@ -678,6 +681,8 @@ def main():
     root01.bind_all('<KeyPress-Down>', lambda event: control_key_pressed(7))
     root01.bind_all('<KeyPress-Left>', lambda event: control_key_pressed(8))
     root01.bind_all('<KeyPress-Right>', lambda event: control_key_pressed(9))
+    root01.bind_all('<KeyPress-p>', lambda event: control_key_pressed(10))
+
     
     root01.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
     root01.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
@@ -689,6 +694,7 @@ def main():
     root01.bind_all('<KeyRelease-Down>', lambda event: control_key_released(7))
     root01.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
     root01.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
+    root01.bind_all('<KeyRelease-p>', lambda event: control_key_released(10))
     
     global ani
     ani = animation.FuncAnimation(fig, update_graph, interval=5000)
