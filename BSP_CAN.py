@@ -24,7 +24,7 @@ ENABLE_Control_From_Shooter =   False
 ENABLE_Control_From_Decision =  False
 ENABLE_Control_From_Remote =    True
 
-CHASSIS_SPEED_INDEX = 100
+CHASSIS_SPEED_INDEX = 25
 MOTOR_ID_HEX = [0x201, 0x202, 0x203, 0x204, 0x205, 0x206, 0x207]
 
 Remote_Pitch = 0
@@ -53,6 +53,7 @@ PITCH_ANGLE = 0.0
 YAW_OMEGA = 0.0
 PITCH_OMEGA = 0.0
 
+MOTOR_Now = []
 
 SERIAL_COMM = []
 
@@ -86,16 +87,19 @@ MOTOR_LOWER_SETTINS.append(PID_SETTINGS_REAL[7])
 
 
 MOTOR_UPPER = []
-MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 174, 0]
+MOTOR_UPPER_SetPoints = [0, 0, 0, 0, 174, 160, 0]
 MOTOR_UPPER_RANGES = [0,0,0,0,360,360,0]
 
 for i in range(rob.mono):
     MOTOR_UPPER.append(PID.PID(MOTOR_UPPER_SETTINS[i]["P"], MOTOR_UPPER_SETTINS[i]["I"], MOTOR_UPPER_SETTINS[i]["D"], MOTOR_UPPER_RANGES[i]))
     MOTOR_UPPER[i].SetPoint=MOTOR_UPPER_SetPoints[i]
-    MOTOR_UPPER[i].setSampleTime(0.01)
+    MOTOR_UPPER[i].setSampleTime(0.001)
 
 MOTOR_UPPER[4].setDegreeFixer(True)
 MOTOR_UPPER[5].setDegreeFixer(True)
+
+MOTOR_UPPER[4].setWindup(2)
+MOTOR_UPPER[5].setWindup(2)
 
 for i in range(4):
     MOTOR_UPPER[i].setFilter(1.5)
@@ -114,7 +118,7 @@ for i in range(rob.mono):
     MOTOR_LOWER[i].SetPoint=MOTOR_LOWER_SetPoints[i]
     MOTOR_LOWER[i].setSampleTime(0.001)
 
-MOTOR_LOWER[5].setBase(1500)
+MOTOR_LOWER[5].setBase(700)
 
 
 SKIP_UPPER_BEGIN = [False,False,False,False,False,False,True]
@@ -170,7 +174,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/SHOOTER/PUB/#")
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/CONFIG/#")
-    client.subscribe("/IMU/AHRS")
+    client.subscribe("/IMU/GYRO")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
     Can_thread = CanThread()
@@ -196,7 +200,7 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode("utf-8"))
     # print(MsgTopic)
 
-    
+
 
     if msg.topic == "/REMOTE/" and ENABLE_Control_From_Remote:
         Robot_X = payload["XSpeed"]
@@ -232,7 +236,7 @@ def on_message(client, userdata, msg):
         Passed_Data = payload["PassData"]
         # print("config_received")
         for i in range(rob.mono):
-            if Config_Type[i] == "None":
+            if Config_Type[i] == "None" and i in [4,5]:
                 # SKIP_UPPER[i] = SKIP_UPPER_BEGIN[i]
                 # SKIP_LOWER[i] = SKIP_LOWER_BEGIN[i]
                 if SKIP_UPPER[i]:
@@ -249,6 +253,14 @@ def on_message(client, userdata, msg):
                     Config_Set[i] = -MOTOR_UPPER_RANGES[i]
                 SKIP_UPPER[i] = False
                 MOTOR_UPPER[i].SetPoint = Config_Set[i]
+            elif Config_Type[i] == "DaUpper":
+                setset = MOTOR_Now[i]+Passed_Data[i]
+                if setset > MOTOR_UPPER_RANGES[i]:
+                    setset  = MOTOR_UPPER_RANGES[i]
+                elif setset < -MOTOR_UPPER_RANGES[i]:
+                    setset = -MOTOR_UPPER_RANGES[i]
+                SKIP_UPPER[i] = False
+                MOTOR_UPPER[i].SetPoint = setset
             elif Config_Type[i] == "Lower":
                 SKIP_UPPER[i] = True
                 if Config_Set[i] > MOTOR_LOWER_RANGES[i]:
@@ -288,17 +300,17 @@ def on_message(client, userdata, msg):
         MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
 
 
-    elif msg.topic == "/IMU/AHRS":
-        YAW_ANGLE = payload["Yaw"]
-        PITCH_ANGLE = payload["Pitch"]
+    elif msg.topic == "/IMU/GYRO":
+        #YAW_ANGLE = payload["Yaw"]
+        #PITCH_ANGLE = payload["Pitch"]
         YAW_OMEGA = payload["GyroYaw"]
         PITCH_OMEGA = payload["GyroPitch"]
         # OnIMU = True
         # print("f")
         # IMUpayload = payload
-    
 
-    
+
+
 
 def massageProcess():
     global MsgPayload
@@ -377,7 +389,7 @@ def massageProcess():
     #     MOTOR_UPPER[6].SetPoint = MOTOR_UPPER[6].SetPoint + payload["Pos"]
     #     MsgPayload["/REMOTE/EXP"] = {}
 
-    
+
 
 def imuMassageProcess():
     global OnIMU
@@ -396,7 +408,7 @@ def imuMassageProcess():
         # MsgPayload["/IMU/AHRS"] = {}
         OnIMU = False
         print("u")
-    
+
 
 
 def compare_pid():
@@ -455,7 +467,7 @@ def get_sign(num):
 def CAN_RCV_LOOP():
     MOTOR_Angle = []
     MOTOR_Phi = []
-    MOTOR_Now = []
+    #MOTOR_Now = []
     motor_out = []
     MOTOR_Total = []
     MOTOR_Updated = [False,False,False,False,True,True,True]
@@ -529,10 +541,10 @@ def CAN_RCV_LOOP():
                 if can_id == MOTOR_ID_HEX[i] :
                     if ((TIME_NOW - MOTOR_TIMER[i] > 0.001) or (i in range(4))):# and (i in range(4,6))) or (TIME_NOW - MOTOR_TIMER[i] > 0.01):#phi_count[i] > 10: #reduce the speed of phi
                         # if i == 0: print("yes")
-                        
+
                         MOTOR_Torque[i] = torque
                         MOTOR_Now[i] = (360.0)/(8191)*(data[0]*256+data[1])
-                            
+
                         if init[i]:
                             MOTOR_Angle[i] = MOTOR_Now[i]
                             init[i] = False

@@ -28,7 +28,7 @@
 modprobe can
 modprobe can_raw
 modprobe mttcan
-ip link set can0 type can bitrate 1000000
+ip link set can0 type can bitrate 1000000 
 ip link set up can0
 CONF_FILE=${HOME}/l4t_dfs.conf
 RED='\e[0;31m'

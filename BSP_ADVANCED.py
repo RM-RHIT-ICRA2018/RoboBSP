@@ -10,7 +10,7 @@ rob.mono = 7
 Remote_Yaw = 0
 Remote_Pitch = 0
 
-PID_SETTINGS_SET = []  
+PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Chassis_Phi
@@ -45,6 +45,7 @@ for i in range(PID_NUM):
     PIDs.append(PID.PID(PID_SETTINGS_REAL[i]["P"], PID_SETTINGS_REAL[i]["I"], PID_SETTINGS_REAL[i]["D"]))
     PIDs[i].SetPoint=PID_SetPoints[i]
     PIDs[i].setSampleTime(0.0001)
+    PIDs[i].setWindup(20)
 
 def update_PID():
     for i in range(PID_NUM):
@@ -92,18 +93,20 @@ def on_message(client, userdata, msg):
             CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Speed":
             for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"  
+                CONFIG_TYPE[i] = "Lower"
             CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"]      
+            CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Image":
             # print(str(payload["dX"]))
             for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"
-            PIDs[3].update(payload["dX"])
-            PIDs[4].update(payload["dY"])
+                CONFIG_TYPE[i] = "DaUpper"
+            ddx = math.atan(payload["dX"]/1500)*90/math.pi
+            ddy = math.atan(payload["dY"]/1500)*90/math.pi
+            PIDs[3].update(ddx)
+            PIDs[4].update(ddy)
             # print(str(PIDs[3].output))
-            DATA_COLLECT[4] = payload["dX"]
-            DATA_COLLECT[5] = payload["dY"]
+            DATA_COLLECT[4] = ddx
+            DATA_COLLECT[5] = ddy
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
             # adv_updated_real[1] = True
@@ -130,7 +133,7 @@ def on_message(client, userdata, msg):
         publish_real_pid()
         for i in range(PID_NUM):
             print(str(PIDs[i].output))
-    
+
     publish_config()
 
 def compare_pid():
@@ -190,6 +193,6 @@ client.connect("127.0.0.1", 1883, 60)
 # Pub_thread.start()
 
 client.loop_forever()
-        
-        
+
+
 
