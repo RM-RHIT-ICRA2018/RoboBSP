@@ -119,7 +119,7 @@ class DataHolder(object):
     motorTorques = []
     gyro = [0.0,0.0,0.0] #[x,y,z]
     acce = [0.0,0.0,0.0] #[x,y,z]
-    controlKeys = [0,0,0,0,0,0,0,0,0,0] #[w,a,s,d,q,e,up,down,left,right]
+    controlKeys = [0,0,0,0,0,0,0,0,0,0,0] #[w,a,s,d,q,e,up,down,left,right,boost]
     key_press = 0
     graph_motor = 0
 
@@ -317,6 +317,7 @@ def updateKeyChassisControl():
     global CHASSIS_X
     global CHASSIS_Y
     global CHASSIS_PHI
+    global CHASSIS_ACCELERATE
     keys = data.controlKeys
     CHASSIS_X = keys[0] - keys[2]
     CHASSIS_Y = keys[3] - keys[1]
