@@ -10,7 +10,9 @@ rob.mono = 7
 Remote_Yaw = 0
 Remote_Pitch = 0
 
-PID_SETTINGS_SET = []
+CHASSIS_TYPE = "none"
+
+PID_SETTINGS_SET = []  
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Chassis_Phi
@@ -45,7 +47,6 @@ for i in range(PID_NUM):
     PIDs.append(PID.PID(PID_SETTINGS_REAL[i]["P"], PID_SETTINGS_REAL[i]["I"], PID_SETTINGS_REAL[i]["D"]))
     PIDs[i].SetPoint=PID_SetPoints[i]
     PIDs[i].setSampleTime(0.0001)
-    PIDs[i].setWindup(20)
 
 def update_PID():
     for i in range(PID_NUM):
@@ -59,15 +60,18 @@ def publish_config():
 
 def on_connect(client, userdata, flags, rc):
     print(BSP_ERROR.notice("MQTT Interface Bind Success."))
-    client.subscribe("/CHASSIS_SET/#")
+    client.subscribe("/CHASSIS/SET")
     client.subscribe("/CHASSIS_STATUS/#")
     client.subscribe("/GIMBAL/SET")
     # client.subscribe("/MOTOR/#")
     client.subscribe("/REMOTE/#")
     client.subscribe("/PID_REMOTE/#")
+    client.subscribe("/CHASSIS/#")
+    client.subscribe("/UWB/PUS")
     client.subscribe("/")
 
 def on_message(client, userdata, msg):
+    global CHASSIS_TYPE
     if msg.topic != "/MOTOR/":
         print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
@@ -76,10 +80,11 @@ def on_message(client, userdata, msg):
         PIDs[1].SetPoint = payload["YSpeed"]
         PIDs[2].SetPoint = payload["PhiSpeed"]
 
-    elif msg.topic == "/CHASSIS_SET/":
-        PIDs[0].SetPoint = payload["XSet"]
-        PIDs[1].SetPoint = payload["YSet"]
-        PIDs[2].SetPoint = payload["PhiSet"]
+    elif msg.topic == "/CHASSIS/SET":
+        CHASSIS_TYPE = payload["Type"]
+        PIDs[0].SetPoint = float(payload["XSet"])
+        PIDs[1].SetPoint = float(payload["YSet"])
+        PIDs[2].SetPoint = float(payload["PhiSet"])
 
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "None":
@@ -93,30 +98,44 @@ def on_message(client, userdata, msg):
             CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Speed":
             for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"
+                CONFIG_TYPE[i] = "Lower"  
             CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"]
+            CONFIG_SET[5] = payload["PitchSet"]      
         elif payload["Type"] == "Image":
             # print(str(payload["dX"]))
             for i in range(4,6):
-                CONFIG_TYPE[i] = "DaUpper"
-            ddx = math.atan(payload["dX"]/1500)*90/math.pi
-            ddy = math.atan(payload["dY"]/1500)*90/math.pi
-            PIDs[3].update(ddx)
-            PIDs[4].update(ddy)
+                CONFIG_TYPE[i] = "Lower"
+            PIDs[3].update(payload["dX"])
+            PIDs[4].update(payload["dY"])
             # print(str(PIDs[3].output))
-            DATA_COLLECT[4] = ddx
-            DATA_COLLECT[5] = ddy
+            DATA_COLLECT[4] = payload["dX"]
+            DATA_COLLECT[5] = payload["dY"]
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
             # adv_updated_real[1] = True
 
 
-    elif msg.topic == "/CHASSIS_STATUS/":
-        PIDs[0].update(payload["XSpeed"])
-        PIDs[1].update(payload["YSpeed"])
-        PIDs[2].update(payload["PhiSpeed"])
-        chassis_output()
+    elif msg.topic == "/CHASSIS_STATUS/VELOCITY":
+        if CHASSIS_TYPE == "velocity":
+            PIDs[0].update(payload["X"])
+            PIDs[1].update(payload["Y"])
+            chassis_output()
+
+    elif msg.topic == "/UWB/PUS":
+        if CHASSIS_TYPE == "position":
+            PIDs[0].update(payload["posX"])
+            PIDs[1].update(payload["posY"])
+            chassis_output()
+
+    elif msg.topic == "/CHASSIS/AHRS":
+        if CHASSIS_TYPE == "position":
+            PIDs[2].update(payload["Yaw"])
+            chassis_output()
+
+    elif msg.topic == "/CHASSIS/RAW":
+        if CHASSIS_TYPE == "velocity":
+            PIDs[2].update(payload["GyroZ"])
+            chassis_output()
 
     elif msg.topic == "/PID_REMOTE/":
         Ps = payload.get("Ps")
@@ -133,7 +152,7 @@ def on_message(client, userdata, msg):
         publish_real_pid()
         for i in range(PID_NUM):
             print(str(PIDs[i].output))
-
+    
     publish_config()
 
 def compare_pid():
@@ -161,6 +180,7 @@ def chassis_output():
     Phi_OUT = PIDs[2].output
     Chassis_OUT = [-X_OUT + Y_OUT + Phi_OUT, X_OUT + Y_OUT + Phi_OUT, X_OUT - Y_OUT + Phi_OUT, -X_OUT - Y_OUT + Phi_OUT]
     for i in range(4):
+        CONFIG_TYPE[i] = "UPPER"
         CONFIG_SET[i] = Chassis_OUT[i]
 
 # def publishAdv():
@@ -193,6 +213,6 @@ client.connect("127.0.0.1", 1883, 60)
 # Pub_thread.start()
 
 client.loop_forever()
-
-
+        
+        
 
