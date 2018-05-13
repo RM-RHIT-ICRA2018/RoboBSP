@@ -113,7 +113,11 @@ class PID:
             self.DTerm = 0.0
             if delta_time > 0:
                 self.DTerm = delta_error / delta_time
+<<<<<<< HEAD
                 if self.DTerm*error < 0: self.DTerm = 0
+=======
+                if self.DTerm < 0: self.DTerm = 0
+>>>>>>> 16f2e6317893090921722026104336835a4c279a
 
             # Remember last time and last error for next calculation
             self.last_time = self.current_time
