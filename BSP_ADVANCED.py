@@ -47,6 +47,7 @@ for i in range(PID_NUM):
     PIDs.append(PID.PID(PID_SETTINGS_REAL[i]["P"], PID_SETTINGS_REAL[i]["I"], PID_SETTINGS_REAL[i]["D"]))
     PIDs[i].SetPoint=PID_SetPoints[i]
     PIDs[i].setSampleTime(0.0001)
+    PIDs[i].setWindup(20)
 
 def update_PID():
     for i in range(PID_NUM):
@@ -100,19 +101,21 @@ def on_message(client, userdata, msg):
             for i in range(4,6):
                 CONFIG_TYPE[i] = "Lower"  
             CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"]      
+            CONFIG_SET[5] = payload["PitchSet"] 
         elif payload["Type"] == "Image":
-            # print(str(payload["dX"]))
+             # print(str(payload["dX"]))
             for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"
-            PIDs[3].update(payload["dX"])
-            PIDs[4].update(payload["dY"])
-            # print(str(PIDs[3].output))
-            DATA_COLLECT[4] = payload["dX"]
-            DATA_COLLECT[5] = payload["dY"]
+                CONFIG_TYPE[i] = "DaUpper"
+                ddx = math.atan(payload["dX"]/1500)*90/math.pi
+                ddy = math.atan(payload["dY"]/1500)*90/math.pi
+            PIDs[3].update(ddx)
+            PIDs[4].update(ddy)
+             # print(str(PIDs[3].output))
+            DATA_COLLECT[4] = ddx
+            DATA_COLLECT[5] = ddy
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
-            # adv_updated_real[1] = True
+             # adv_updated_real[1] = True     
 
 
     elif msg.topic == "/CHASSIS_STATUS/VELOCITY":

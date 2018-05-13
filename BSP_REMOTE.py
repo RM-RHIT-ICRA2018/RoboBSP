@@ -25,18 +25,24 @@ rob = ROB.robot()
 payloadM = {}
 payloadP = {}
 payloadA = {}
+payloadPc = {}
+payloadPa = {}
 onAdv = False
 onMotor = False
 onPIDCan = False
 onPIDAdv = False
 
+CHASSIS_TYPE = "position"
 
+chassis_update = False
 rob.mono = 8
 client = mqtt.Client()
 motor_directions = (1,1,1,1)
 motor_labels = []
+chassis_labels = []
 pid_labels = [[],[],[]]
 pid_entrys = [[],[],[]]
+chassis_status = [0,0,0]
 XList = range(200,0,-1)
 YListS = [0] * 200
 YListA = [0] * 200
@@ -158,7 +164,9 @@ def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
 
     client.subscribe("/MOTOR/")
-    client.subscribe("/PID_FEEDBACK/")
+    client.subscribe("/PID_FEEDBACK/#")
+    client.subscribe("/ADVANCE/")
+
     
 def on_message(client, userdata, msg):
     global onMotor
@@ -168,6 +176,11 @@ def on_message(client, userdata, msg):
     global payloadA
     global payloadM
     global payloadP
+    global payloadPc
+    global payloadPa
+    global CHASSIS_TYPE
+    global chassis_update
+    global chassis_status
     
     if msg.topic == "/MOTOR/":
         onMotor = True
@@ -178,10 +191,19 @@ def on_message(client, userdata, msg):
         
     elif msg.topic == "/PID_FEEDBACK/CAN":
         onPIDCan = True
-        payloadP = json.loads(msg.payload.decode())
+        payloadPc = json.loads(msg.payload.decode())
     elif msg.topic == "/PID_FEEDBACK/ADVANCED":
         onPIDAdv = True
-        payloadP = json.loads(msg.payload.decode())
+        payloadPa = json.loads(msg.payload.decode())
+    elif msg.topic == "/UWB/PUS":
+        if CHASSIS_TYPE == "position":
+            chassis_status[0] = payload["posX"]
+            chassis_status[1] = payload["posY"]
+            chassis_update = True
+    elif msg.topic == "/CHASSIS/AHRS":
+        if CHASSIS_TYPE == "position":
+            chassis_status[2] = payload["Yaw"]
+            chassis_update = True
         
 def massageProcess():
     global onMotor
@@ -192,6 +214,9 @@ def massageProcess():
     global payloadM
     global payloadP
     global motorID
+    global payloadPc
+    global payloadPa
+    global chassis_update
     # print("thread")
     if onMotor:
         # print("onMotor")
@@ -239,10 +264,10 @@ def massageProcess():
 
     if onPIDCan:
         PIDs = []
-        PIDs.append(payloadP.get("Ps"))
-        PIDs.append(payloadP.get("Is"))
-        PIDs.append(payloadP.get("Ds"))
-        agree = payloadP.get("Agree")
+        PIDs.append(payloadPc.get("Ps"))
+        PIDs.append(payloadPc.get("Is"))
+        PIDs.append(payloadPc.get("Ds"))
+        agree = payloadPc.get("Agree")
         if agree == "True":
             warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
         else:
@@ -251,15 +276,16 @@ def massageProcess():
         for i in range(3):
             PID_feedback[i] = PIDs[i]
             for j in range(len(PID_feedback[i])):
-                if PID_feedback[i][j] != float(pid_labels[i][j].cget("text")):
+                if PID_feedback[i][j] != float(pid_labels[i][j].cget("text")):                    
+                    pid_text = "%04.2f" % (float(PID_feedback[i][j]))
+                    pid_labels[i][j].config(text=pid_text)
                     if init[i][j]:
                         PID_set[i][j] = float(PID_feedback[i][j])
-                        pid_text = "%04.2f" % (float(PID_feedback[i][j]))
-                        pid_labels[i][j].config(text=pid_text)
                         init[i][j] = False
                     else:
                         udd = False
                         break
+        print("Real PID received")
         if udd:
             warning_labels[1].config(text="PID Settings Updated",background='#0f0')
         else:
@@ -267,10 +293,10 @@ def massageProcess():
         onPIDCan = False
     if onPIDAdv:
         PIDs = []
-        PIDs.append(payloadP.get("Ps"))
-        PIDs.append(payloadP.get("Is"))
-        PIDs.append(payloadP.get("Ds"))
-        agree = payloadP.get("Agree")
+        PIDs.append(payloadPa.get("Ps"))
+        PIDs.append(payloadPa.get("Is"))
+        PIDs.append(payloadPa.get("Ds"))
+        agree = payloadPa.get("Agree")
         if agree == "True":
             warning_labels[0].config(text="All PID Settings Agree",background='#0f0')
         else:
@@ -281,10 +307,10 @@ def massageProcess():
             for j in range(len(PID_feedback[i])):
                 k = len(rob.PID_Items_BASIC) + j
                 if PID_feedback[i][j] != float(pid_labels[i][k].cget("text")):
+                    pid_text = "%04.2f" % (float(PID_feedback[i][j]))
+                    pid_labels[i][k].config(text=pid_text)
                     if init[i][k]:
-                        PID_set[i][k] = float(PID_feedback[i][j])
-                        pid_text = "%04.2f" % (float(PID_feedback[i][j]))
-                        pid_labels[i][k].config(text=pid_text)
+                        PID_set[i][k] = float(PID_feedback[i][j])                        
                         init[i][k] = False
                     else:
                         udd = False
@@ -294,24 +320,17 @@ def massageProcess():
         else:
             warning_labels[1].config(text="PID Settings Not Updated",background='#f00')
         onPIDCan = False
-
-
-
-
-
-
-
-
+    if chassis_update:
+        for i in range(3):
+            ctext = "%04.2f" % chassis_status[i]
+            chassis_labels[i].comfig(text=ctext)
 
 def publishPID():
     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
 
-
 def publishControl():
     client.publish("/REMOTE/", json.dumps({"XSpeed": CHASSIS_X*CHASSIS_ACCELERATE, "YSpeed": CHASSIS_Y*CHASSIS_ACCELERATE, "PhiSpeed": CHASSIS_PHI*CHASSIS_ACCELERATE, "Pitch":PITCH_MOVE, "Yaw": YAW_MOVE, "YawAngle": YAW_SET, "PitchAngle": PITCH_SET}))
 
-    
-    
 def updateKeyChassisControl():
     global keys
     global CHASSIS_X
@@ -426,7 +445,8 @@ def set_gimbal(yaw_entry,pitch_entry):
     PITCH_SET = int(pitch_entry.get())
     publishControl()
 
-
+def set_chassis(chassis_entries):
+    client.publish("/CHASSIS/SET", json.dumps({"Type": CHASSIS_TYPE, "XSet": int(chassis_entries[0].get()), "YSet": int(chassis_entries[1].get()), "PhiSet": int(chassis_entries[2].get())}))
 
 class MsgThread(threading.Thread):
     def __init__(self):
@@ -455,10 +475,10 @@ def main():
     
     # GUI setup
 
-    root01 = tkinter.Tk()
-    root02 = tkinter.Tk()
+    root = tkinter.Tk()
+    window_2 = tkinter.Toplevel()
 
-    left_frame = ttk.Frame(root01, padding = 5)
+    left_frame = ttk.Frame(root, padding = 5)
     
     monitor_frame = ttk.Labelframe(left_frame, padding=10, text='Status Monitor')
     
@@ -572,39 +592,65 @@ def main():
     
     monitor_frame.grid(column=0,row=0)
 
-    control_frame = ttk.Labelframe(left_frame, padding=10, text='Control')
-
-    enable_control_check = ttk.Checkbutton(control_frame, text='Enable Keyboard Control')
-    
-    enable_control_check_observer = tkinter.StringVar()
-    enable_control_check['variable'] = enable_control_check_observer
-    enable_control_check['command'] = lambda: enable_control()
-    
-    enable_control_check.grid(row=0)
-
-    gimbal_control_frame = ttk.Labelframe(control_frame, padding=5,text='Gimbal Angle Setting')
-
-    gimbal_entry_frame = ttk.Frame(gimbal_control_frame, padding=5)
-
-    yaw_entry = ttk.Entry(gimbal_entry_frame,width=20)
-    yaw_entry.grid(column=0,row=0)
-
-    pitch_entry = ttk.Entry(gimbal_entry_frame,width=20)
-    pitch_entry.grid(column=1,row=0)
-
-    gimbal_entry_frame.grid()
-
-    gimbal_set_button = ttk.Button(gimbal_control_frame, width=20, text='Set Gimbal Angle')
-    gimbal_set_button['command'] = lambda: set_gimbal(yaw_entry,pitch_entry)
-    gimbal_set_button.grid()
-
-    gimbal_control_frame.grid(row=1)
-
-    control_frame.grid(column=0,row=1)
+    control_frame = ttk.Labelframe(left_frame, padding=10, text='Control') #----------------------------------------------------\
+    #                                                                                                                           |
+    enable_control_check = ttk.Checkbutton(control_frame, text='Enable Keyboard Control') #-----\                               |
+    #                                                                                           |                               |
+    enable_control_check_observer = tkinter.StringVar() #                                       |                               |
+    enable_control_check['variable'] = enable_control_check_observer #                          |                               |
+    enable_control_check['command'] = lambda: enable_control() #                                |                               |
+    #                                                                                           |                               |
+    enable_control_check.grid(row=0) #----------------------------------------------------------/                               |
+    #                                                                                                                           |
+    gimbal_control_frame = ttk.Labelframe(control_frame, padding=5,text='Gimbal Angle Setting') #---\                           |
+    #                                                                                               |                           |
+    gimbal_entry_frame = ttk.Frame(gimbal_control_frame, padding=5) #-----------\                   |                           |
+    #                                                                           |                   |                           |
+    yaw_entry = ttk.Entry(gimbal_entry_frame,width=20) #-------------\          |                   |                           |
+    yaw_entry.grid(column=0,row=0) #---------------------------------/          |                   |                           |
+    #                                                                           |                   |                           |
+    pitch_entry = ttk.Entry(gimbal_entry_frame,width=20) #-------------\        |                   |                           |
+    pitch_entry.grid(column=1,row=0) #---------------------------------/        |                   |                           |
+    #                                                                           |                   |                           |
+    gimbal_entry_frame.grid()#--------------------------------------------------/                   |                           |
+    #                                                                                               |                           |
+    gimbal_set_button = ttk.Button(gimbal_control_frame, width=20, text='Set Gimbal Angle') #-\     |                           |
+    gimbal_set_button['command'] = lambda: set_gimbal(yaw_entry,pitch_entry) #                |     |                           |
+    gimbal_set_button.grid() #----------------------------------------------------------------/     |                           |
+    #                                                                                               |                           |
+    gimbal_control_frame.grid(row=1) #--------------------------------------------------------------/                           |
+    #                                                                                                                           |
+    chassis_control_frame = ttk.Labelframe(control_frame, padding=5,text='Chassis Target Setting') #------------\               |
+    #                                                                                                           |               |
+    chassis_status_frame = ttk.Frame(chassis_control_frame, padding=5) #--------------------\                   |               |
+    #                                                                                       |                   |               |
+    for i in range(3): #                                                                    |                   |               |
+        ctext = "%04.2f" % chassis_status[i] #                                              |                   |               |
+        chassis_labels.append(ttk.Label(chassis_status_frame, width=20, text=ctext)) #-\    |                   |               |
+        chassis_labels[i].grid(column=i,row=0) #---------------------------------------/    |                   |               |
+    #                                                                                       |                   |               |    
+    chassis_status_frame.grid() #-----------------------------------------------------------/                   |               |
+    #                                                                                                           |               |
+    chassis_entry_frame = ttk.Frame(chassis_control_frame, padding=5) #---------------------\                   |               |
+    #                                                                                       |                   |               |
+    chassis_entries = [] #                                                                  |                   |               |
+    for i in range(3): #                                                                    |                   |               |
+        chassis_entries.append(ttk.Entry(chassis_entry_frame,width=20)) #--\                |                   |               |
+        chassis_entries[i].grid(column=i,row=0) #--------------------------/                |                   |               |
+    #                                                                                       |                   |               |
+    chassis_entry_frame.grid() #------------------------------------------------------------/                   |               |
+    #                                                                                                           |               |
+    chassis_set_button = ttk.Button(chassis_control_frame, width=20, text='Set Chassis') #--\                   |               |
+    chassis_set_button['command'] = lambda: set_chassis(chassis_entries) #                  |                   |               |
+    chassis_set_button.grid() #-------------------------------------------------------------/                   |               |
+    #                                                                                                           |               |
+    chassis_control_frame.grid #--------------------------------------------------------------------------------/               |
+    #                                                                                                                           |
+    control_frame.grid(column=0,row=1) #----------------------------------------------------------------------------------------/
 
     left_frame.grid(column=0,row=0)
 
-    graph_frame = ttk.Labelframe(root01, padding=2, text="Real-time Graphics")
+    graph_frame = ttk.Labelframe(root, padding=2, text="Real-time Graphics")
 
     canvas = FigureCanvasTkAgg(fig, graph_frame)
     canvas.show()
@@ -633,7 +679,7 @@ def main():
 
     graph_frame.grid(column=1,row=0)    
 
-    PID_frame = ttk.Labelframe(root02, padding=0, text="PID Adjustment")
+    PID_frame = ttk.Labelframe(window_2, padding=0, text="PID Adjustment")
 
     warning_label_0 = ttk.Label(PID_frame,text="All PID Settings Agree",background='#0f0')
     warning_label_0.grid(column=0, row=0)
@@ -672,30 +718,30 @@ def main():
     
     
     
-    root01.bind_all('<KeyPress-w>', lambda event: control_key_pressed(0))
-    root01.bind_all('<KeyPress-a>', lambda event: control_key_pressed(1))
-    root01.bind_all('<KeyPress-s>', lambda event: control_key_pressed(2))
-    root01.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
-    root01.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
-    root01.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
-    root01.bind_all('<KeyPress-Up>', lambda event: control_key_pressed(6))    
-    root01.bind_all('<KeyPress-Down>', lambda event: control_key_pressed(7))
-    root01.bind_all('<KeyPress-Left>', lambda event: control_key_pressed(8))
-    root01.bind_all('<KeyPress-Right>', lambda event: control_key_pressed(9))
-    root01.bind_all('<KeyPress-p>', lambda event: control_key_pressed(10))
+    root.bind_all('<KeyPress-w>', lambda event: control_key_pressed(0))
+    root.bind_all('<KeyPress-a>', lambda event: control_key_pressed(1))
+    root.bind_all('<KeyPress-s>', lambda event: control_key_pressed(2))
+    root.bind_all('<KeyPress-d>', lambda event: control_key_pressed(3))
+    root.bind_all('<KeyPress-q>', lambda event: control_key_pressed(4))
+    root.bind_all('<KeyPress-e>', lambda event: control_key_pressed(5))
+    root.bind_all('<KeyPress-Up>', lambda event: control_key_pressed(6))    
+    root.bind_all('<KeyPress-Down>', lambda event: control_key_pressed(7))
+    root.bind_all('<KeyPress-Left>', lambda event: control_key_pressed(8))
+    root.bind_all('<KeyPress-Right>', lambda event: control_key_pressed(9))
+    root.bind_all('<KeyPress-p>', lambda event: control_key_pressed(10))
 
     
-    root01.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
-    root01.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
-    root01.bind_all('<KeyRelease-s>', lambda event: control_key_released(2))
-    root01.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
-    root01.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
-    root01.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
-    root01.bind_all('<KeyRelease-Up>', lambda event: control_key_released(6))    
-    root01.bind_all('<KeyRelease-Down>', lambda event: control_key_released(7))
-    root01.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
-    root01.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
-    root01.bind_all('<KeyRelease-p>', lambda event: control_key_released(10))
+    root.bind_all('<KeyRelease-w>', lambda event: control_key_released(0))
+    root.bind_all('<KeyRelease-a>', lambda event: control_key_released(1))
+    root.bind_all('<KeyRelease-s>', lambda event: control_key_released(2))
+    root.bind_all('<KeyRelease-d>', lambda event: control_key_released(3))
+    root.bind_all('<KeyRelease-q>', lambda event: control_key_released(4))
+    root.bind_all('<KeyRelease-e>', lambda event: control_key_released(5))
+    root.bind_all('<KeyRelease-Up>', lambda event: control_key_released(6))    
+    root.bind_all('<KeyRelease-Down>', lambda event: control_key_released(7))
+    root.bind_all('<KeyRelease-Left>', lambda event: control_key_released(8))
+    root.bind_all('<KeyRelease-Right>', lambda event: control_key_released(9))
+    root.bind_all('<KeyRelease-p>', lambda event: control_key_released(10))
     
     global ani
     ani = animation.FuncAnimation(fig, update_graph, interval=5000)
@@ -703,8 +749,7 @@ def main():
     Msg_thread = MsgThread()
     Msg_thread.start()
 
-    root01.mainloop()
-    root02.mainloop()
+    root.mainloop()
     
     
     
