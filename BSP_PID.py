@@ -78,32 +78,32 @@ class PID:
            Test PID with Kp=1.2, Ki=1, Kd=0.001 (test_pid.py)
 
         """
-        
+
         error = self.SetPoint - feedback_value
         if self.degreeFixer:
             if error > 180:
                 error = error - 360
             elif error < -180:
                 error = error + 360
-        # if self.filter > 1: 
+        # if self.filter > 1:
         #     print("01")
-        
-        if abs(error - self.last_error) < self.filter: 
+
+        if abs(error - self.last_error) < self.filter:
             return
-        # if self.filter > 1: 
+        # if self.filter > 1:
         #     print("02")
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
         self.PTerm = self.Kp * error
 
-        
+
 
         if (delta_time >= self.sample_time):
-            
+
             self.ITerm += error*delta_time
 
-            
+
 
             if (self.ITerm < -self.windup_guard):
                 self.ITerm = -self.windup_guard
@@ -113,6 +113,7 @@ class PID:
             self.DTerm = 0.0
             if delta_time > 0:
                 self.DTerm = delta_error / delta_time
+                if self.DTerm*error < 0: self.DTerm = 0
 
             # Remember last time and last error for next calculation
             self.last_time = self.current_time
@@ -169,7 +170,7 @@ class PID:
 
     def setDegreeFixer(self, b):
         self.degreeFixer = b
-    
+
     def setFilter(self, f):
         self.filter = f
 
