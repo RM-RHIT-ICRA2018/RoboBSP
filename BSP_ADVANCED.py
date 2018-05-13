@@ -68,7 +68,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/REMOTE/#")
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/CHASSIS/#")
-    client.subscribe("/UWB/PUS")
+    client.subscribe("/UWB/POS")
     client.subscribe("/")
 
 def on_message(client, userdata, msg):
@@ -124,7 +124,7 @@ def on_message(client, userdata, msg):
             PIDs[1].update(payload["Y"])
             chassis_output()
 
-    elif msg.topic == "/UWB/PUS":
+    elif msg.topic == "/UWB/POS":
         if CHASSIS_TYPE == "position":
             PIDs[0].update(payload["posX"])
             PIDs[1].update(payload["posY"])

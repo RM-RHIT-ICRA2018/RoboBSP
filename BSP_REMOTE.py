@@ -166,6 +166,8 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/MOTOR/")
     client.subscribe("/PID_FEEDBACK/#")
     client.subscribe("/ADVANCE/")
+    client.subscribe("/UWB/POS")
+    client.subscribe("/CHASSIS/AHRS")
 
     
 def on_message(client, userdata, msg):
@@ -195,14 +197,16 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/PID_FEEDBACK/ADVANCED":
         onPIDAdv = True
         payloadPa = json.loads(msg.payload.decode())
-    elif msg.topic == "/UWB/PUS":
+    elif msg.topic == "/UWB/POS":
+        payloadUWB = json.loads(msg.payload.decode())
         if CHASSIS_TYPE == "position":
-            chassis_status[0] = payload["posX"]
-            chassis_status[1] = payload["posY"]
+            chassis_status[0] = payloadUWB["posX"]
+            chassis_status[1] = payloadUWB["posY"]
             chassis_update = True
     elif msg.topic == "/CHASSIS/AHRS":
+        payloadCA = json.loads(msg.payload.decode())
         if CHASSIS_TYPE == "position":
-            chassis_status[2] = payload["Yaw"]
+            chassis_status[2] = payloadCA["Yaw"]
             chassis_update = True
         
 def massageProcess():
@@ -323,7 +327,7 @@ def massageProcess():
     if chassis_update:
         for i in range(3):
             ctext = "%04.2f" % chassis_status[i]
-            chassis_labels[i].comfig(text=ctext)
+            chassis_labels[i].config(text=ctext)
 
 def publishPID():
     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
@@ -644,7 +648,7 @@ def main():
     chassis_set_button['command'] = lambda: set_chassis(chassis_entries) #                  |                   |               |
     chassis_set_button.grid() #-------------------------------------------------------------/                   |               |
     #                                                                                                           |               |
-    chassis_control_frame.grid #--------------------------------------------------------------------------------/               |
+    chassis_control_frame.grid() #--------------------------------------------------------------------------------/               |
     #                                                                                                                           |
     control_frame.grid(column=0,row=1) #----------------------------------------------------------------------------------------/
 
