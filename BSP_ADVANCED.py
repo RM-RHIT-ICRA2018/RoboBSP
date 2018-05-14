@@ -140,7 +140,7 @@ def on_message(client, userdata, msg):
                 CHASSIS_READY[1] = True
             chassis_output()
 
-    elif msg.topic == "/CHASSIS/AHRS":
+    elif msg.topic == "/CHASSIS/AHRS/ALIG":
         CHASSIS_ANGLE = payload["Yaw"]
         if CHASSIS_TYPE == "position":
             PIDs[2].update(payload["Yaw"])
