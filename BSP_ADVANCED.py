@@ -60,6 +60,11 @@ def update_PID():
         PIDs[i].setKd(PID_SETTINGS_REAL[i]["D"])
 
 def publish_config():
+    global CONFIG_SET
+    global CONFIG_TYPE
+    for i in range(4):
+        CONFIG_TYPE[i] = "Upper"
+        CONFIG_SET[i] = 100
     client.publish("/CONFIG/", json.dumps({"Type": CONFIG_TYPE, "Set": CONFIG_SET, "PassData": DATA_COLLECT}))
 
 def on_connect(client, userdata, flags, rc):
