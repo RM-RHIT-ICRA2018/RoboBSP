@@ -16,7 +16,7 @@ CHASSIS_TYPE = "none"
 
 CHASSIS_ANGLE = 0
 
-PID_SETTINGS_SET = []  
+PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})          #Chassis_Phi
@@ -79,6 +79,8 @@ def on_message(client, userdata, msg):
     global CHASSIS_ANGLE
     if msg.topic != "/MOTOR/":
         print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    print(str(msg.payload) + " "+ msg.topic)
+
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/REMOTE/":
         PIDs[0].SetPoint = payload["XSpeed"]
@@ -103,9 +105,9 @@ def on_message(client, userdata, msg):
             CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Speed":
             for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"  
+                CONFIG_TYPE[i] = "Lower"
             CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"] 
+            CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Image":
              # print(str(payload["dX"]))
             for i in range(4,6):
@@ -119,7 +121,7 @@ def on_message(client, userdata, msg):
             DATA_COLLECT[5] = ddy
             CONFIG_SET[4] = PIDs[3].output
             CONFIG_SET[5] = PIDs[4].output
-             # adv_updated_real[1] = True     
+             # adv_updated_real[1] = True
 
 
     elif msg.topic == "/CHASSIS_STATUS/VELOCITY":
@@ -169,7 +171,7 @@ def on_message(client, userdata, msg):
         publish_real_pid()
         for i in range(PID_NUM):
             print(str(PIDs[i].output))
-    
+
     publish_config()
 
 def compare_pid():
@@ -237,6 +239,6 @@ client.connect("127.0.0.1", 1883, 60)
 # Pub_thread.start()
 
 client.loop_forever()
-        
-        
+
+
 
