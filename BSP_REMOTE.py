@@ -167,7 +167,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/PID_FEEDBACK/#")
     client.subscribe("/ADVANCE/")
     client.subscribe("/UWB/POS")
-    client.subscribe("/CHASSIS/AHRS")
+    client.subscribe("/CHASSIS/#")
 
     
 def on_message(client, userdata, msg):
@@ -199,11 +199,12 @@ def on_message(client, userdata, msg):
         payloadPa = json.loads(msg.payload.decode())
     elif msg.topic == "/UWB/POS":
         payloadUWB = json.loads(msg.payload.decode())
+
         if CHASSIS_TYPE == "position":
             chassis_status[0] = payloadUWB["posX"]
             chassis_status[1] = payloadUWB["posY"]
             chassis_update = True
-    elif msg.topic == "/CHASSIS/AHRS":
+    elif msg.topic == "/CHASSIS/AHRS/ALIG":
         payloadCA = json.loads(msg.payload.decode())
         if CHASSIS_TYPE == "position":
             chassis_status[2] = payloadCA["Yaw"]
