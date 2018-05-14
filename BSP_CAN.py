@@ -6,6 +6,8 @@ import BSP_ROBOT_CONFIG as ROB
 
 rob = ROB.robot()
 
+SHUT_DOWN = False
+
 PRINT_MOTOR_INFO = False
 PRINT_ROLLING = False
 PRINT_RANGE = [5]
@@ -175,6 +177,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/CONFIG/#")
     client.subscribe("/IMU/GYRO")
+    client.subscribe("/FAILSAFE/")
 
     print(BSP_ERROR.notice("MQTT Subscribe Success, Topic: /CANBUS/#, Start Receiving CAN Messages."))
     Can_thread = CanThread()
@@ -195,6 +198,7 @@ def on_message(client, userdata, msg):
     global PITCH_ANGLE
     global YAW_OMEGA
     global PITCH_OMEGA
+    global SHUT_DOWN
     if msg.topic == "/CONFIG/":
         print(BSP_ERROR.info("Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
@@ -308,6 +312,17 @@ def on_message(client, userdata, msg):
         # OnIMU = True
         # print("f")
         # IMUpayload = payload
+    
+    elif msg.topic == "/FAILSAFE/":
+        if payload["Type"] == "ForceShutDown":
+            SHUT_DOWN = True
+            can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
+            sock.send(can_pkt)
+            can_pkt = struct.pack(fmt, 0x1FF,8, bytes([0,0,0,0,0,0]))
+            sock.send(can_pkt)
+
+
+
 
 
 
@@ -692,15 +707,21 @@ def CAN_RCV_LOOP():
 
                 try:
                     CAN_PACK = []
-                    for i in range(4):
-                        CAN_PACK.append(int(int(motor_out[i])/256))
-                        CAN_PACK.append(int(int(motor_out[i])%256))
+                    if not SHUT_DOWN:
+                        for i in range(4):
+                            CAN_PACK.append(int(int(motor_out[i])/256))
+                            CAN_PACK.append(int(int(motor_out[i])%256))
+                    else:
+                        CAN_PACK = [0,0,0,0,0,0,0,0]
                     can_pkt = struct.pack(fmt, 0x200,8,bytes(CAN_PACK))
                     sock.send(can_pkt)
                     CAN_PACK = []
-                    for i in range(3):
-                        CAN_PACK.append(int(int(motor_out[i+4])/256))
-                        CAN_PACK.append(int(int(motor_out[i+4])%256))
+                    if not SHUT_DOWN:
+                        for i in range(3):
+                            CAN_PACK.append(int(int(motor_out[i+4])/256))
+                            CAN_PACK.append(int(int(motor_out[i+4])%256))
+                    else:
+                        CAN_PACK = [0,0,0,0,0,0]
                     can_pkt = struct.pack(fmt, 0x1FF,8,bytes(CAN_PACK))
 
                     #can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))

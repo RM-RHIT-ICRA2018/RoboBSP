@@ -10,7 +10,11 @@ rob.mono = 7
 Remote_Yaw = 0
 Remote_Pitch = 0
 
+CHASSIS_READY = [False, False, False]
+
 CHASSIS_TYPE = "none"
+
+CHASSIS_ANGLE = 0
 
 PID_SETTINGS_SET = []  
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
@@ -39,7 +43,6 @@ for i in range(rob.mono):
     CONFIG_TYPE.append("None")
     CONFIG_SET.append(0.0)
     DATA_COLLECT.append(0.0)
-
 
 PID_SetPoints = [0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -73,6 +76,7 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     global CHASSIS_TYPE
+    global CHASSIS_ANGLE
     if msg.topic != "/MOTOR/":
         print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     payload = json.loads(msg.payload.decode("utf-8"))
@@ -127,12 +131,22 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/UWB/POS":
         if CHASSIS_TYPE == "position":
             PIDs[0].update(payload["posX"])
+            if not CHASSIS_READY[0]:
+                PIDs[0].SetPoint = payload["posX"]
+                CHASSIS_READY[0] = True
             PIDs[1].update(payload["posY"])
+            if not CHASSIS_READY[1]:
+                PIDs[1].SetPoint = payload["posY"]
+                CHASSIS_READY[1] = True
             chassis_output()
 
     elif msg.topic == "/CHASSIS/AHRS":
+        CHASSIS_ANGLE = payload["Yaw"]
         if CHASSIS_TYPE == "position":
             PIDs[2].update(payload["Yaw"])
+            if not CHASSIS_READY[2]:
+                PIDs[2].SetPoint = payload["Yaw"]
+                CHASSIS_READY[2] = True
             chassis_output()
 
     elif msg.topic == "/CHASSIS/RAW":
@@ -177,14 +191,21 @@ def publish_real_pid():
     pid_msg = {"Ps":Ps, "Is":Is, "Ds":Ds, "Agree": agree}
     client.publish("/PID_FEEDBACK/ADVANCED", json.dumps(pid_msg))
 
+def chassis_decode(X, Y, Phi, Angle):
+    rY = Y * math.cos(Angle) + X * math.sin(Angle)
+    rX = X * math.cos(Angle) + Y * math.sin(Angle)
+    return [rX-rY+Phi, rX+rY+Phi, -rX+rY+Phi, -rX-rY+Phi]
+
 def chassis_output():
-    X_OUT = PIDs[0].output
-    Y_OUT = PIDs[1].output
-    Phi_OUT = PIDs[2].output
-    Chassis_OUT = [-X_OUT + Y_OUT + Phi_OUT, X_OUT + Y_OUT + Phi_OUT, X_OUT - Y_OUT + Phi_OUT, -X_OUT - Y_OUT + Phi_OUT]
-    for i in range(4):
-        CONFIG_TYPE[i] = "UPPER"
-        CONFIG_SET[i] = Chassis_OUT[i]
+    global CHASSIS_ANGLE
+    if CHASSIS_READY[0] and CHASSIS_READY[1] and CHASSIS_READY[2]:
+        X_OUT = PIDs[0].output
+        Y_OUT = PIDs[1].output
+        Phi_OUT = PIDs[2].output
+        Chassis_OUT = chassis_decode(X_OUT, Y_OUT, Phi_OUT, CHASSIS_ANGLE)
+        for i in range(4):
+            CONFIG_TYPE[i] = "UPPER"
+            CONFIG_SET[i] = Chassis_OUT[i]
 
 # def publishAdv():
 #     global adv_updated_real
