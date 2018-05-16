@@ -88,7 +88,7 @@ def on_message(client, userdata, msg):
     global CHASSIS_ANGLE
     if msg.topic != "/MOTOR/":
         print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
-    print(str(msg.payload) + " "+ msg.topic)
+    # print(str(msg.payload) + " "+ msg.topic)
 
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/REMOTE/":
@@ -205,6 +205,7 @@ def publish_real_pid():
 def chassis_decode(X, Y, Phi, Angle):
     rY = Y * math.cos(360-Angle) + X * math.sin(360-Angle)
     rX = X * math.cos(360-Angle) + Y * math.sin(360-Angle)
+    print("X: %f, Y: %f, Phi: %f, Angle: %f, rX: %f, rY: %f" % (X,Y,Phi,Angle,rX,rY))
     return [rX-rY+Phi, rX+rY+Phi, -rX+rY+Phi, -rX-rY+Phi]
 
 def chassis_output():
