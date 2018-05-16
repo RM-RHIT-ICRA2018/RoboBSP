@@ -4,6 +4,8 @@ import BSP_ROBOT_CONFIG as ROB
 import copy
 import paho.mqtt.client as mqtt
 
+NAME = "BSP_ADVANCED"
+
 rob = ROB.robot()
 rob.mono = 7
 
@@ -199,8 +201,8 @@ def publish_real_pid():
     client.publish("/PID_FEEDBACK/ADVANCED", json.dumps(pid_msg))
 
 def chassis_decode(X, Y, Phi, Angle):
-    rY = Y * math.cos(Angle) + X * math.sin(Angle)
-    rX = X * math.cos(Angle) + Y * math.sin(Angle)
+    rY = Y * math.cos(360-Angle) + X * math.sin(360-Angle)
+    rX = X * math.cos(360-Angle) + Y * math.sin(360-Angle)
     return [rX-rY+Phi, rX+rY+Phi, -rX+rY+Phi, -rX-rY+Phi]
 
 def chassis_output():
@@ -243,7 +245,13 @@ client.connect("127.0.0.1", 1883, 60)
 # Pub_thread = PubThread()
 # Pub_thread.start()
 
-client.loop_forever()
+client.loop_start()
+
+client.publish("/SYS/APP/STR", json.dumps({"Name": NAME, "Time": time.time}))
+
+while True:
+    time.sleep(1)
+    client.publish("/SYS/APP/HBT", json.dumps({"Name": NAME, "Time": time.time}))
 
 
 

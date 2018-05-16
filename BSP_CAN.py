@@ -4,6 +4,8 @@ import paho.mqtt.client as mqtt
 import BSP_ERROR, BSP_PID as PID
 import BSP_ROBOT_CONFIG as ROB
 
+NAME = "BSP_CAN"
+
 rob = ROB.robot()
 
 SHUT_DOWN = False
@@ -753,11 +755,14 @@ client.connect("127.0.0.1", 1883, 60)
 # Msg_imu_thread = Msg_imu_Thread()
 # Msg_imu_thread.start()
 
-client.loop_forever()
+client.loop_start()
+
+client.publish("/SYS/APP/STR", json.dumps({"Name": NAME, "Time": time.time}))
 
 try:
     while True:
-        time.sleep(.1)
+        time.sleep(1)
+        client.publish("/SYS/APP/HBT", json.dumps({"Name": NAME, "Time": time.time}))
 except KeyboardInterrupt:
             print("Ctrl_C Interrupted")
             can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
