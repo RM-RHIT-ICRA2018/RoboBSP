@@ -86,8 +86,8 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global CHASSIS_TYPE
     global CHASSIS_ANGLE
-    if msg.topic != "/MOTOR/":
-        print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
+    # if msg.topic != "/MOTOR/":
+        # print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     # print(str(msg.payload) + " "+ msg.topic)
 
     payload = json.loads(msg.payload.decode("utf-8"))
