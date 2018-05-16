@@ -14,7 +14,7 @@ Remote_Pitch = 0
 
 CHASSIS_READY = [False, False, False]
 
-CHASSIS_TYPE = "none"
+CHASSIS_TYPE = "position"
 
 CHASSIS_ANGLE = 0
 
@@ -54,6 +54,8 @@ for i in range(PID_NUM):
     PIDs[i].setSampleTime(0.0001)
     PIDs[i].setWindup(20)
 
+PIDs[2].setDegreeFixer(True)
+
 def update_PID():
     for i in range(PID_NUM):
         PIDs[i].clear()
@@ -64,9 +66,9 @@ def update_PID():
 def publish_config():
     global CONFIG_SET
     global CONFIG_TYPE
-    for i in range(4):
-        CONFIG_TYPE[i] = "Upper"
-        CONFIG_SET[i] = 100
+    #for i in range(4):
+    #    CONFIG_TYPE[i] = "Upper"
+    #    CONFIG_SET[i] = 100
     client.publish("/CONFIG/", json.dumps({"Type": CONFIG_TYPE, "Set": CONFIG_SET, "PassData": DATA_COLLECT}))
 
 def on_connect(client, userdata, flags, rc):
@@ -74,7 +76,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/CHASSIS/SET")
     client.subscribe("/CHASSIS_STATUS/#")
     client.subscribe("/GIMBAL/SET")
-    # client.subscribe("/MOTOR/#")
+    client.subscribe("/MOTOR/#")
     client.subscribe("/REMOTE/#")
     client.subscribe("/PID_REMOTE/#")
     client.subscribe("/CHASSIS/#")
@@ -213,8 +215,8 @@ def chassis_output():
         Phi_OUT = PIDs[2].output
         Chassis_OUT = chassis_decode(X_OUT, Y_OUT, Phi_OUT, CHASSIS_ANGLE)
         for i in range(4):
-            CONFIG_TYPE[i] = "UPPER"
-            CONFIG_SET[i] = Chassis_OUT[i]
+            CONFIG_TYPE[i] = "Upper"
+            CONFIG_SET[i] = (float)(Chassis_OUT[i])
 
 # def publishAdv():
 #     global adv_updated_real
