@@ -757,12 +757,12 @@ client.connect("127.0.0.1", 1883, 60)
 
 client.loop_start()
 
-client.publish("/SYS/APP/STR", json.dumps({"Name": NAME, "Time": time.time}))
+client.publish("/SYS/APP/STR", json.dumps({"Name": NAME, "Time": time.time()}))
 
 try:
     while True:
         time.sleep(1)
-        client.publish("/SYS/APP/HBT", json.dumps({"Name": NAME, "Time": time.time}))
+        client.publish("/SYS/APP/HBT", json.dumps({"Name": NAME, "Time": time.time()}))
 except KeyboardInterrupt:
             print("Ctrl_C Interrupted")
             can_pkt = struct.pack(fmt, 0x200,8, bytes([0,0,0,0,0,0,0,0]))
