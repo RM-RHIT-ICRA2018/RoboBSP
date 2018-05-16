@@ -257,6 +257,7 @@ def on_message(client, userdata, msg):
                     Config_Set[i] = -MOTOR_UPPER_RANGES[i]
                 SKIP_UPPER[i] = False
                 MOTOR_UPPER[i].SetPoint = Config_Set[i]
+                #print(MOTOR_UPPER[0].SetPoint, type(Config_Set[0]))
             elif Config_Type[i] == "DaUpper":
                 setset = MOTOR_Now[i]+Passed_Data[i]
                 if setset > MOTOR_UPPER_RANGES[i]:
