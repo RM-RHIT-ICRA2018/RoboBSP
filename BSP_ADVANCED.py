@@ -203,8 +203,8 @@ def publish_real_pid():
     client.publish("/PID_FEEDBACK/ADVANCED", json.dumps(pid_msg))
 
 def chassis_decode(X, Y, Phi, Angle):
-    rY = Y * math.cos(360-Angle) + X * math.sin(360-Angle)
-    rX = X * math.cos(360-Angle) + Y * math.sin(360-Angle)
+    rY = Y * math.cos(math.radians(360-Angle)) + X * math.sin(math.radians(360-Angle))
+    rX = X * math.cos(math.radians(360-Angle)) + Y * math.sin(math.radians(360-Angle))
     print("X: %f, Y: %f, Phi: %f, Angle: %f, rX: %f, rY: %f" % (X,Y,Phi,Angle,rX,rY))
     return [rX-rY+Phi, rX+rY+Phi, -rX+rY+Phi, -rX-rY+Phi]
 
