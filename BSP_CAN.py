@@ -223,15 +223,18 @@ def on_message(client, userdata, msg):
             MOTOR_UPPER[i].SetPoint = MOTOR_Remote[i]*CHASSIS_SPEED_INDEX
 
     elif msg.topic == "/PID_REMOTE/":
-        Ps = payload.get("Ps")
-        Is = payload.get("Is")
-        Ds = payload.get("Ds")
-        for i in range(PID_Num):
-            PID_SETTINGS_REAL[i]["P"] = Ps[i]
-            PID_SETTINGS_REAL[i]["I"] = Is[i]
-            PID_SETTINGS_REAL[i]["D"] = Ds[i]
-        print(str(PID_SETTINGS_REAL[0]["P"]))
-        update_PID()
+        if payload("Ps") == "Request":
+            pass
+        else:
+            Ps = payload.get("Ps")
+            Is = payload.get("Is")
+            Ds = payload.get("Ds")
+            for i in range(PID_Num):
+                PID_SETTINGS_REAL[i]["P"] = Ps[i]
+                PID_SETTINGS_REAL[i]["I"] = Is[i]
+                PID_SETTINGS_REAL[i]["D"] = Ds[i]
+            print(str(PID_SETTINGS_REAL[0]["P"]))
+            update_PID()
         publish_real_pid()
 
     elif msg.topic == "/CONFIG/":
