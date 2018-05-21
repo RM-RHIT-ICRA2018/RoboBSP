@@ -1,12 +1,15 @@
 import socket, struct, sys, json, time, os.path, threading, math, random
 import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
+from rplidar import RPLidar
 
 NAME = "OBST"
 CHASSIS_ANGLE = 0.0
 COMMAND = [0.0, 0.0, 0.0]
 CONTROL = [1.0, 1.0, 1.0, 1.0]
 OUTPUT = [0.0, 0.0, 0.0]
+
+PORT_NAME = '/dev/ttyUSB0'
 
 Robot_Outbond = [200, 270]
 Control_Dis = 380.0
@@ -33,6 +36,33 @@ def distanceFilter(raw, angle):
     if raw > 600.0:
         return 1.0
     return (1.0/220)*raw - (380.0/220)
+
+def LiDarProcess():
+    lidar = RPLidar(PORT_NAME)
+    try:
+        print('Recording measurments... Press Crl+C to stop.')
+        for scan in lidar.iter_scans():
+            CONTROL = [1.0, 1.0, 1.0, 1.0]
+            for point in scan:
+                ang = degreeFixer(-point[0]+270.0)
+                pra = distanceFilter(point[1], ang)
+                if ang < 90 or ang > 270:
+                    if pra < CONTROL[0]:
+                        CONTROL[0] = pra
+                if ang > 0 and ang < 180:
+                    if pra < CONTROL[1]:
+                        CONTROL[1] = pra
+                if ang > 90 and ang < 270:
+                    if pra < CONTROL[2]:
+                        CONTROL[2] = pra
+                if ang > 180 and ang < 360:
+                    if pra < CONTROL[0]:
+                        CONTROL[0] = pra
+        print("Process result: | X_P - %f | Y_P - %f | X_N - %f | Y_N - %f |" % (CONTROL[0], CONTROL[1], CONTROL[2], CONTROL[3]))
+    except KeyboardInterrupt:
+        print('Stoping.')
+    lidar.stop()
+    lidar.disconnect()
     
 
 
@@ -63,23 +93,14 @@ def on_message(client, userdata, msg):
             OUTPUT[1] = COMMAND[1]* CONTROL[3]
         OUTPUT[2] = COMMAND[2]
         client.publish("/CHASSIS/SET", json.dumps({"Type": "velocity", "XSet": OUTPUT[0], "YSet": OUTPUT[1], "PhiSet": OUTPUT[2]}))
-    elif msg.topic == "/LIDAR/":
-        CONTROL = [1.0, 1.0, 1.0, 1.0]
-        for point in payload["Points"]:
-            ang = degreeFixer(-point[0]+270.0)
-            pra = distanceFilter(point[1], ang)
-            if ang < 90 or ang > 270:
-                if pra < CONTROL[0]:
-                    CONTROL[0] = pra
-            if ang > 0 and ang < 180:
-                if pra < CONTROL[1]:
-                    CONTROL[1] = pra
-            if ang > 90 and ang < 270:
-                if pra < CONTROL[2]:
-                    CONTROL[2] = pra
-            if ang > 180 and ang < 360:
-                if pra < CONTROL[0]:
-                    CONTROL[0] = pra
+
+class LiDarThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            LiDarProcess()
 
 
 
@@ -89,11 +110,15 @@ client.on_message = on_message
 
 print("MQTT Interface Start Binding.")
 
-client.connect("127.0.0.1", 1883, 60)
+client.connect("192.168.1.2", 1883, 60)
 
-# Pub_thread = PubThread()
-# Pub_thread.start()
+LiDar_thread = LiDarThread()
+LiDar_thread.start()
 
 client.loop_start()
 
 client.publish("/SYS/APP/STR", json.dumps({"Name": NAME, "Time": time.time()}))
+
+while True:
+    time.sleep(1)
+    client.publish("/SYS/APP/HBT", json.dumps({"Name": NAME, "Time": time.time()}))

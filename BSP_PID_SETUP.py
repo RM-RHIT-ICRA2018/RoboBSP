@@ -4,7 +4,7 @@ import BSP_ROBOT_CONFIG as ROB
 import copy
 import paho.mqtt.client as mqtt
 
-
+NAME = "BSP_PID_SETUP"
 start = False
 
 Ps = [ 180,   0,  20,  15,  20,  15,   0,   0, 0.5, 0.5,-0.5,   0,   0]
@@ -25,7 +25,7 @@ def on_message(client, userdata, msg):
     if msg.topic == "/SYS/INIT/STR":
         start = True
         client.publish("/PID_REMOTE/", json.dumps({"Ps": Ps, "Is": Is, "Ds": Ds}))
-    elif msg.topic == "/SYS/INIT/STR":
+    elif msg.topic == "/SYS/INIT/END":
         start = False
         client.publish("/PID_REMOTE/", json.dumps({"Ps": [0,0,0,0,0,0,0,0,0,0,0,0,0], "Is": [0,0,0,0,0,0,0,0,0,0,0,0,0], "Ds": [0,0,0,0,0,0,0,0,0,0,0,0,0]}))
         client.publish("/FAILSAFE/", json.dumps({"Type": "ForceShutDown"}))
