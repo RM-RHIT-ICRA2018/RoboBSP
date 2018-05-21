@@ -44,8 +44,8 @@ def LiDarProcess():
         for scan in lidar.iter_scans():
             CONTROL = [1.0, 1.0, 1.0, 1.0]
             for point in scan:
-                ang = degreeFixer(-point[0]+270.0)
-                pra = distanceFilter(point[1], ang)
+                ang = degreeFixer(-point[1]+270.0)
+                pra = distanceFilter(point[2], ang)
                 if ang < 90 or ang > 270:
                     if pra < CONTROL[0]:
                         CONTROL[0] = pra
