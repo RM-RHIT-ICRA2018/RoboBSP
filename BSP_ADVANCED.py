@@ -18,6 +18,8 @@ CHASSIS_TYPE = "position"
 
 CHASSIS_ANGLE = 0
 
+Target = False
+
 PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
@@ -86,6 +88,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global CHASSIS_TYPE
     global CHASSIS_ANGLE
+    global Target
     # if msg.topic != "/MOTOR/":
         # print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     # print(str(msg.payload) + " "+ msg.topic)
@@ -108,29 +111,34 @@ def on_message(client, userdata, msg):
             for i in range(4,6):
                 CONFIG_TYPE[i] = "None"
         if payload["Type"] == "Angle":
-            for i in range(4,6):
-                CONFIG_TYPE[i] = "Upper"
-            CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"]
+            if not Target:
+                for i in range(4,6):
+                    CONFIG_TYPE[i] = "Upper"
+                CONFIG_SET[4] = payload["YawSet"]
+                CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Speed":
-            for i in range(4,6):
-                CONFIG_TYPE[i] = "Lower"
-            CONFIG_SET[4] = payload["YawSet"]
-            CONFIG_SET[5] = payload["PitchSet"]
+            if not Target:
+                for i in range(4,6):
+                    CONFIG_TYPE[i] = "Lower"
+                CONFIG_SET[4] = payload["YawSet"]
+                CONFIG_SET[5] = payload["PitchSet"]
         elif payload["Type"] == "Image":
-             # print(str(payload["dX"]))
-            for i in range(4,6):
-                CONFIG_TYPE[i] = "DaUpper"
-                ddx = math.atan(payload["dX"]/1500)*90/math.pi
-                ddy = math.atan(payload["dY"]/1500)*90/math.pi
-            PIDs[3].update(ddx)
-            PIDs[4].update(ddy)
-             # print(str(PIDs[3].output))
-            DATA_COLLECT[4] = ddx
-            DATA_COLLECT[5] = ddy
-            CONFIG_SET[4] = PIDs[3].output
-            CONFIG_SET[5] = PIDs[4].output
-             # adv_updated_real[1] = True
+            if payload["Target"] == "Positive":
+                Target = True
+                for i in range(4,6):
+                    CONFIG_TYPE[i] = "DaUpper"
+                    ddx = math.atan(payload["dX"]/1500)*90/math.pi
+                    ddy = math.atan(payload["dY"]/1500)*90/math.pi
+                PIDs[3].update(ddx)
+                PIDs[4].update(ddy)
+                # print(str(PIDs[3].output))
+                DATA_COLLECT[4] = ddx
+                DATA_COLLECT[5] = ddy
+                CONFIG_SET[4] = PIDs[3].output
+                CONFIG_SET[5] = PIDs[4].output
+                # adv_updated_real[1] = True
+            else:
+                Target = False
 
 
     elif msg.topic == "/CHASSIS_STATUS/VELOCITY":
@@ -213,14 +221,25 @@ def chassis_decode(X, Y, Phi, Angle):
 
 def chassis_output():
     global CHASSIS_ANGLE
-    if CHASSIS_READY[0] and CHASSIS_READY[1] and CHASSIS_READY[2]:
-        X_OUT = PIDs[0].output
-        Y_OUT = PIDs[1].output
-        Phi_OUT = PIDs[2].output
-        Chassis_OUT = chassis_decode(X_OUT, Y_OUT, Phi_OUT, CHASSIS_ANGLE)
+    global CHASSIS_TYPE
+    if CHASSIS_TYPE == "position":
+        if CHASSIS_READY[0] and CHASSIS_READY[1] and CHASSIS_READY[2]:
+            X_OUT = PIDs[0].output
+            Y_OUT = PIDs[1].output
+            Phi_OUT = PIDs[2].output
+            Chassis_OUT = chassis_decode(X_OUT, Y_OUT, Phi_OUT, CHASSIS_ANGLE)
+            for i in range(4):
+                CONFIG_TYPE[i] = "Upper"
+                CONFIG_SET[i] = (float)(Chassis_OUT[i])
+    elif CHASSIS_TYPE == "velocity":
+        rX = PIDs[0].SetPoint
+        rY = PIDs[1].SetPoint
+        Phi = PIDs[2].SetPoint
+        Chassis_OUT = [rX-rY+Phi, rX+rY+Phi, -rX+rY+Phi, -rX-rY+Phi]
         for i in range(4):
             CONFIG_TYPE[i] = "Upper"
             CONFIG_SET[i] = (float)(Chassis_OUT[i])
+
 
 # def publishAdv():
 #     global adv_updated_real
