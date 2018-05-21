@@ -105,6 +105,8 @@ def on_message(client, userdata, msg):
         PIDs[0].SetPoint = float(payload["XSet"])
         PIDs[1].SetPoint = float(payload["YSet"])
         PIDs[2].SetPoint = float(payload["PhiSet"])
+        if payload["Type"] == "velocity":
+            chassis_output()
 
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "None":
