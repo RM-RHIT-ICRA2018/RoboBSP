@@ -333,6 +333,9 @@ def massageProcess():
 def publishPID():
     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
 
+def publishCommand():
+    client.publish("/CHASSIS/COMMAND", json.dumps({"X": CHASSIS_X*CHASSIS_ACCELERATE, "Y": CHASSIS_Y*CHASSIS_ACCELERATE, "Phi": CHASSIS_PHI*CHASSIS_ACCELERATE}))
+
 def publishControl():
     client.publish("/REMOTE/", json.dumps({"XSpeed": CHASSIS_X*CHASSIS_ACCELERATE, "YSpeed": CHASSIS_Y*CHASSIS_ACCELERATE, "PhiSpeed": CHASSIS_PHI*CHASSIS_ACCELERATE, "Pitch":PITCH_MOVE, "Yaw": YAW_MOVE, "YawAngle": YAW_SET, "PitchAngle": PITCH_SET}))
 
@@ -350,7 +353,8 @@ def updateKeyChassisControl():
     YAW_MOVE = keys[8] - keys[9]
     CHASSIS_ACCELERATE = 1 + keys[10]
     print('x: ' + str(CHASSIS_X) + ' y: ' + str(CHASSIS_Y) + ' phi: ' +str(CHASSIS_PHI) + ' pitch: ' + str(PITCH_MOVE) + ' yaw: ' + str(YAW_MOVE))
-    publishControl()
+    publishCommand()
+    # publishControl()
     
 def control_key_pressed(keyNo):
     if data.input_enabled and data.controlKeys[keyNo] == 0:
@@ -649,7 +653,7 @@ def main():
     chassis_set_button['command'] = lambda: set_chassis(chassis_entries) #                  |                   |               |
     chassis_set_button.grid() #-------------------------------------------------------------/                   |               |
     #                                                                                                           |               |
-    chassis_control_frame.grid() #--------------------------------------------------------------------------------/               |
+    chassis_control_frame.grid() #------------------------------------------------------------------------------/               |
     #                                                                                                                           |
     control_frame.grid(column=0,row=1) #----------------------------------------------------------------------------------------/
 

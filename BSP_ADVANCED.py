@@ -100,6 +100,7 @@ def on_message(client, userdata, msg):
         PIDs[2].SetPoint = payload["PhiSpeed"]
 
     elif msg.topic == "/CHASSIS/SET":
+        print("%f  %f  %f" % (payload["XSet"], payload["YSet"], payload["PhiSet"]))
         CHASSIS_TYPE = payload["Type"]
         PIDs[0].SetPoint = float(payload["XSet"])
         PIDs[1].SetPoint = float(payload["YSet"])
