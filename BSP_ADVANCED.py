@@ -20,6 +20,9 @@ CHASSIS_ANGLE = 0
 
 Target = False
 
+yawTo = 174
+pitchTo = 160
+
 PID_SETTINGS_SET = []
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})        #Chassis_X
 PID_SETTINGS_SET.append({"P":0.0, "I":0.0, "D":0.0})            #Chassis_Y
@@ -84,11 +87,14 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/CHASSIS/#")
     client.subscribe("/UWB/POS")
     client.subscribe("/")
+    client.subscribe("/GIMBAL/TO")
 
 def on_message(client, userdata, msg):
     global CHASSIS_TYPE
     global CHASSIS_ANGLE
     global Target
+    global yawTo
+    global pitchTo
     # if msg.topic != "/MOTOR/":
         # print(BSP_ERROR.info((" Time: %08.5f" % time.time()) + "Topic: "+ msg.topic + " Payload: " + msg.payload.decode("utf-8")))
     # print(str(msg.payload) + " "+ msg.topic)
@@ -144,8 +150,8 @@ def on_message(client, userdata, msg):
                 Target = False
                 for i in range(4,6):
                     CONFIG_TYPE[i] = "Upper"
-                CONFIG_SET[4] = 174
-                CONFIG_SET[5] = 160
+                CONFIG_SET[4] = yawTo
+                CONFIG_SET[5] = pitchTo
 
 
     elif msg.topic == "/CHASSIS_STATUS/VELOCITY":
@@ -195,6 +201,9 @@ def on_message(client, userdata, msg):
         publish_real_pid()
         for i in range(PID_NUM):
             print(str(PIDs[i].output))
+    elif msg.topic == "/GIMBAL/TO":
+        yawTo = payload["Yaw"]
+        pitchTo = payload["Pitch"]
 
     publish_config()
 
