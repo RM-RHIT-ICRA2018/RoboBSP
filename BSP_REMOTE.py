@@ -346,8 +346,8 @@ def updateKeyChassisControl():
     global CHASSIS_PHI
     global CHASSIS_ACCELERATE
     keys = data.controlKeys
-    CHASSIS_X = keys[0] - keys[2]
-    CHASSIS_Y = keys[3] - keys[1]
+    CHASSIS_Y = keys[0] - keys[2]
+    CHASSIS_X = keys[3] - keys[1]
     CHASSIS_PHI = keys[5] - keys[4]
     PITCH_MOVE = keys[6] - keys[7]
     YAW_MOVE = keys[8] - keys[9]
@@ -357,13 +357,13 @@ def updateKeyChassisControl():
     # publishControl()
     
 def control_key_pressed(keyNo):
-    if data.input_enabled and data.controlKeys[keyNo] == 0:
+    if data.input_enabled:# and data.controlKeys[keyNo] == 0:
         print(str(keyNo)+' Pressed')
         data.controlKeys[keyNo] = 1
         updateKeyChassisControl()
         
 def control_key_released(keyNo):
-    if data.input_enabled and data.controlKeys[keyNo] == 1:
+    if data.input_enabled:# and data.controlKeys[keyNo] == 1:
         print(str(keyNo)+' Released')
         data.controlKeys[keyNo] = 0
         updateKeyChassisControl()

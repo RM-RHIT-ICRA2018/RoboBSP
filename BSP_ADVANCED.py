@@ -142,6 +142,10 @@ def on_message(client, userdata, msg):
                 # adv_updated_real[1] = True
             else:
                 Target = False
+                for i in range(4,6):
+                    CONFIG_TYPE[i] = "Upper"
+                CONFIG_SET[4] = 174
+                CONFIG_SET[5] = 160
 
 
     elif msg.topic == "/CHASSIS_STATUS/VELOCITY":

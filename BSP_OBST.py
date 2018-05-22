@@ -19,7 +19,7 @@ Y_Bond = 280.0
 
 def bond_by_angle(angle):
     bond_ang = math.degrees(math.atan(Y_Bond/X_Bond))
-    if (angle < bond_ang or angle > 360-bond_ang) or (angle < 180 + bond_ang or angle > 180 - bond_ang):
+    if (angle < bond_ang or angle > 360-bond_ang) or (angle < 180 + bond_ang and angle > 180 - bond_ang):
         return abs(X_Bond/math.cos(math.radians(angle)))
     return abs(Y_Bond/math.sin(math.radians(angle)))
 
@@ -31,11 +31,22 @@ def degreeFixer(angle):
     return angle
 
 def distanceFilter(raw, angle):
-    if raw < bond_by_angle(angle):
-        return 1.0
-    if raw > 600.0:
-        return 1.0
-    return (1.0/220)*raw - (380.0/220)
+    out = [1.0, 1.0]
+    if raw*abs(math.sin(math.radians(angle))) < (Y_Bond+100):
+        dis = raw * abs(math.cos(math.radians(angle)))
+        if dis > X_Bond and dis < X_Bond + 300:
+            if dis < X_Bond + 100:
+                out[0] = 0.0
+            else:
+                out[0] = (dis - X_Bond)/200 - 0.5
+    if raw*abs(math.cos(math.radians(angle))) < (X_Bond+100):
+        dis = raw * abs(math.sin(math.radians(angle)))
+        if dis > Y_Bond and dis < Y_Bond + 300:
+            if dis < Y_Bond + 100:
+                out[1] = 0.0
+            else:
+                out[1] = (dis - Y_Bond)/200 - 0.5
+    return out
 
 def LiDarProcess():
     lidar = RPLidar(PORT_NAME)
@@ -47,17 +58,17 @@ def LiDarProcess():
                 ang = degreeFixer(-point[1]+270.0)
                 pra = distanceFilter(point[2], ang)
                 if ang < 90 or ang > 270:
-                    if pra < CONTROL[0]:
-                        CONTROL[0] = pra
+                    if pra[0] < CONTROL[0]:
+                        CONTROL[0] = pra[0]
                 if ang > 0 and ang < 180:
-                    if pra < CONTROL[1]:
-                        CONTROL[1] = pra
+                    if pra[1] < CONTROL[1]:
+                        CONTROL[1] = pra[1]
                 if ang > 90 and ang < 270:
-                    if pra < CONTROL[2]:
-                        CONTROL[2] = pra
+                    if pra[0] < CONTROL[2]:
+                        CONTROL[2] = pra[0]
                 if ang > 180 and ang < 360:
-                    if pra < CONTROL[0]:
-                        CONTROL[0] = pra
+                    if pra[1] < CONTROL[3]:
+                        CONTROL[0] = pra[1]
         print("Process result: | X_P - %f | Y_P - %f | X_N - %f | Y_N - %f |" % (CONTROL[0], CONTROL[1], CONTROL[2], CONTROL[3]))
     except KeyboardInterrupt:
         print('Stoping.')
@@ -80,9 +91,14 @@ def on_message(client, userdata, msg):
     if msg.topic == "/CHASSIS/AHRS/ALIG":
         CHASSIS_ANGLE = payload["Yaw"]
     elif msg.topic == "/CHASSIS/COMMAND":
-        COMMAND[0] = payload["X"]
-        COMMAND[1] = payload["Y"]
+        X = payload["X"]
+        Y = payload["Y"]
         COMMAND[2] = payload["Phi"]
+        Alpha = math.radians(360-CHASSIS_ANGLE)
+        sin = math.sin(Alpha)
+        cos = math.cos(Alpha)
+        COMMAND[1] = X * sin + Y * cos
+        COMMAND[0] = X * cos - Y * sin
         if COMMAND[0] > 0:
             OUTPUT[0] = COMMAND[0]* CONTROL[0]
         else:
