@@ -13,9 +13,11 @@ start_point = [0,0,0]
 start_initialized = [False,False,False]
 robot_ready = False
 step = 0
+point_threshold = [10, 10, 10]
 stand_by = False
 
-points = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+# [Xpos, Ypos, Angle, ]
+points = [[0,0,0,0,0,0],[6700, 2450,180,140,160,20],[7400,600,1000,174,160,500],[0,0,0,0,0,0]]
 
 def at_point(p1, p2):
     for i in range(3):
@@ -50,9 +52,14 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     global start
-    global Ps
-    global Is
-    global Ds
+    global start_initialized
+    global points
+    global current_point
+    global start_point
+    global robot_ready
+
+    payload = json.loads(msg.payload.decode("utf-8"))
+
     if msg.topic == "/SYS/INIT/STR":
         time.sleep(1)
         start = True
@@ -82,7 +89,12 @@ def on_message(client, userdata, msg):
             points[0][2] = payload["Yaw"]
             start_initialized[2] = True
 
-def navigation()
+def navigation():
+    global step
+    global start
+    global points
+    global current_point
+
     if start:
         if step>=len(points): return
         target_point = points[step]
